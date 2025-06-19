@@ -14,11 +14,11 @@ html, body {
 
 body {
     /* Retaining the original background image URL */
-    background-image: url('bg.jpg');
+    background-image: url('https://files.123freevectors.com/wp-content/original/164510-dark-blue-texture-background.jpg');
     background-size: cover;
     background-position: center;
     background-attachment: fixed;
-    background-color: #2576e7; /* Fallback color */
+    background-color: #333366; /* Fallback color */
     font-family: var(--font-body);
     display: flex;
     flex-direction: column;

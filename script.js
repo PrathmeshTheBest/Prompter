@@ -23,35 +23,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const copyPromptBtnFormat = document.getElementById('copy-prompt-btn-format');
     const resetBtnFormat = document.getElementById('reset-btn-format');
 
-    // Generate Page elements (Removed from HTML, keeping these for reference in case they were used elsewhere not evident from snippet)
-    // const generatePage = document.getElementById('generate-page'); // No longer exists in HTML
-    // const finalPromptOutputGenerate = document.getElementById('final-prompt-generate'); // No longer exists in HTML
-    // const copyPromptBtnGenerate = document.getElementById('copy-prompt-btn-generate'); // No longer exists in HTML
-
-    // API Selection and Key Input (No longer exists in HTML)
-    // const apiProviderToggleGroup = document.getElementById('api-provider-toggle-group');
-    // const apiProviderSliderIndicator = document.getElementById('api-provider-slider-indicator');
-    // const apiProviderButtons = apiProviderToggleGroup ? apiProviderToggleGroup.querySelectorAll('.toggle-button') : [];
-
-    // const openaiModelSelection = document.getElementById('openai-model-selection');
-    // const googleImageModelSelection = document.getElementById('google-image-model-selection');
-    // const openaiModelToggleGroup = document.getElementById('openai-model-toggle-group');
-    // const openaiModelSliderIndicator = document.getElementById('openai-model-slider-indicator');
-    // const openaiModelButtons = openaiModelToggleGroup ? openaiModelToggleGroup.querySelectorAll('.toggle-button') : [];
-
-    // const googleImageModelToggleGroup = document.getElementById('google-image-model-toggle-group');
-    // const googleImageModelSliderIndicator = document.getElementById('google-image-model-slider-indicator');
-    // const googleImageModelButtons = googleImageModelToggleGroup ? googleImageModelToggleGroup.querySelectorAll('.toggle-button') : [];
-
-    // const openaiApiKeyInput = document.getElementById('openai-api-key');
-    // const googleImageApiKeyInput = document.getElementById('google-image-api-key');
-    // const clearApiButtons = document.querySelectorAll('.action-button.clear-btn'); // Still exists in HTML but for other inputs now
-
-    // const generateImageBtn = document.getElementById('generate-image-btn'); // No longer exists in HTML
-    // const imageDisplayArea = document.getElementById('image-display-area'); // No longer exists in HTML
-    // const loadingIndicator = document.getElementById('loading-indicator'); // No longer exists in HTML
-
-
     const messageBox = document.getElementById('message-box');
 
     const pageToggleGroup = document.getElementById('page-toggle-group');
@@ -81,20 +52,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const selectedOptions = {}; // Global state for selected options by category ID
     const activePresets = {}; // Stores { 'preset-category-id': 'selected-preset-name' } (for predefined presets)
-    let customKeywordsSet = new Set(); // To store user-added keywords (Manual tab, also affected by custom presets)
-    let customUserPresets = []; // To store user-defined preset objects {name: string, keywords: string[]}
 
-    // Removed API related state variables as generate tab is removed
-    // let currentApiProvider = 'openai'; // Default selected provider
-    // let currentOpenAIModel = 'dall-e-3'; // Default OpenAI model
-    // let currentGoogleImageModel = 'imagen-3.0-generate-002'; // Default Google Imagen model
+    // New state variables for detailed keyword management
+    let userTypedCustomKeywords = new Set(); // Keywords directly typed by user
+    let activeCustomPresetKeywords = new Set(); // Keywords from the currently selected custom user preset (including its name)
+    let activePredefinedPresetName = ''; // Name of the currently selected predefined preset
+
+    let customUserPresets = []; // To store user-defined preset objects {name: string, keywords: string[]}
 
 
     // Initialize selectedOptions with empty Sets for all manual categories
     categoriesData.forEach(cat => {
         selectedOptions[cat.id] = new Set();
     });
-    // Initialize custom-keywords category for selectedOptions (for Manual tab custom keywords & Custom Presets)
+    // The 'custom-keywords' set in selectedOptions will now be a dynamic combination
     selectedOptions['custom-keywords'] = new Set();
 
 
@@ -146,7 +117,6 @@ document.addEventListener('DOMContentLoaded', () => {
             subjectInputFormat.value = subjectInputManual.value; // Sync from master
             renderFormatPageInputs(); // Render inputs when switching to format page
         }
-        // Removed 'generate' page handling
 
         if (activeButton) {
             activeButton.classList.add('active');
@@ -174,8 +144,16 @@ document.addEventListener('DOMContentLoaded', () => {
                     prevPresetButton.classList.remove('selected');
                 }
                 delete activePresets[presetCategory.id]; // Remove active preset tracking
+                activePredefinedPresetName = ''; // Clear active predefined preset name
                 updateSelectedPresetKeywordsDisplay(); // Clear display if preset deselected indirectly
             }
+            // Clear any active custom preset if a manual option that might conflict is picked
+            if (activeCustomPresetKeywords.size > 0) {
+                 activeCustomPresetKeywords.clear();
+                 document.querySelectorAll('#user-presets-display-area .preset-option-card').forEach(card => card.classList.remove('selected'));
+                 updateSelectedPresetKeywordsDisplay();
+            }
+
             optionItem.classList.add('selected');
             customCheckboxVisual.querySelector('svg').classList.remove('hidden');
         } else {
@@ -293,15 +271,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Function to apply a predefined preset
     const applyPreset = (presetCategory, presetName, keywords, clickedPresetCard) => {
-        // Deselect all other presets in the same preset category (visual only)
+        // Clear any active custom preset
+        activeCustomPresetKeywords.clear();
+        document.querySelectorAll('#user-presets-display-area .preset-option-card').forEach(card => card.classList.remove('selected'));
+
+        // Deselect all other predefined presets in the same preset category (visual only)
         document.querySelectorAll(`#preset-category-${presetCategory.id} .preset-option-card`).forEach(card => {
             card.classList.remove('selected');
         });
-        // Also deselect any custom user presets if a predefined one is selected
-        document.querySelectorAll('#user-presets-display-area .preset-option-card').forEach(card => {
-            card.classList.remove('selected');
-        });
-
 
         // Clear previously selected options in the TARGET MANUAL CATEGORY
         if (!selectedOptions[presetCategory.targetCategory]) {
@@ -334,6 +311,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         selectedOptions[presetCategory.targetCategory].clear(); // Clear the data model
 
+
         // Add new preset's keywords to selectedOptions and visually select them in Manual mode
         keywords.forEach(keyword => {
             selectedOptions[presetCategory.targetCategory].add(keyword);
@@ -355,13 +333,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Store active preset for this preset category
         activePresets[presetCategory.id] = presetName;
+        activePredefinedPresetName = presetName; // Store the name for prompt inclusion
 
         // Dynamically insert the selectedPresetKeywordsDisplay after the clicked preset's category section
         const clickedCategorySection = clickedPresetCard.closest('.glass-element');
         if (clickedCategorySection) {
             clickedCategorySection.after(selectedPresetKeywordsDisplay);
         }
-
 
         // Update the dedicated keyword display area
         updateSelectedPresetKeywordsDisplay(keywords);
@@ -401,10 +379,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 presetCard.className = 'preset-option-card';
                 presetCard.setAttribute('type', 'button'); // Explicitly set type to button
 
-                // Generate a placeholder image URL based on preset name
-                const imageText = preset.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
-                // Changed image dimensions to match new rectangular card size
-                const imageUrl = `https://placehold.co/250x150/3B82F6/ffffff?text=${imageText}`;
+                // Use the image URL from data.js if available, otherwise fallback to placehold.co
+                const imageUrl = preset.imageUrl || `https://placehold.co/250x150/3B82F6/ffffff?text=${preset.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase()}`;
 
                 // Set background image directly via style attribute
                 presetCard.style.backgroundImage = `url('${imageUrl}')`;
@@ -474,12 +450,50 @@ document.addEventListener('DOMContentLoaded', () => {
             categorySection.appendChild(textarea);
             formatCategoriesSectionsContainer.appendChild(categorySection);
         });
+
+        // Add the custom keywords input to the format page as well, reflecting userTypedCustomKeywords
+        const customKeywordsFormatSection = document.createElement('div');
+        customKeywordsFormatSection.className = 'glass-element p-6 rounded-lg w-full';
+        customKeywordsFormatSection.innerHTML = `
+            <h2 class="text-white text-2xl font-bold mb-4 text-center" style="font-family: var(--font-heading);">
+                Your Custom Keywords (Manual & Custom Presets)
+            </h2>
+            <p class="text-white text-md opacity-80 text-center mb-4">
+                Keywords from the 'Manual' tab's custom input and active custom presets.
+            </p>
+            <textarea id="format-input-custom-keywords"
+                      class="w-full p-3 rounded-md bg-transparent text-white border border-gray-600 focus:border-blue-500 focus:outline-none placeholder-gray-400 custom-scroll"
+                      rows="3" placeholder="Enter comma-separated custom keywords."></textarea>
+        `;
+        formatCategoriesSectionsContainer.appendChild(customKeywordsFormatSection);
+
+        const formatCustomKeywordsInput = document.getElementById('format-input-custom-keywords');
+        // Combine userTypedCustomKeywords and activeCustomPresetKeywords for display
+        const combinedCustomKeywords = new Set([...userTypedCustomKeywords, ...activeCustomPresetKeywords]);
+        formatCustomKeywordsInput.value = Array.from(combinedCustomKeywords).join(', ');
+
+        formatCustomKeywordsInput.addEventListener('input', (event) => {
+            const inputValue = event.target.value.trim();
+            userTypedCustomKeywords.clear(); // Clear existing user-typed
+            if (inputValue) {
+                inputValue.split(',').map(k => k.trim()).filter(k => k !== '').forEach(k => userTypedCustomKeywords.add(k));
+            }
+            saveCustomKeywords(); // Save only user-typed keywords
+            renderCustomKeywords(); // Update Manual tab display
+            updateFinalPrompt();
+        });
     };
+
 
     // NEW: Function to parse input from Format tab and update selectedOptions
     const parseFormatInputAndUpdatePrompt = (event) => {
         const categoryId = event.target.dataset.categoryId;
         const inputValue = event.target.value.trim();
+
+        if (categoryId === 'custom-keywords') {
+            // This is now handled by the specific event listener for format-input-custom-keywords
+            return;
+        }
 
         if (!selectedOptions[categoryId]) {
             selectedOptions[categoryId] = new Set();
@@ -505,19 +519,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 prevPresetCard.classList.remove('selected');
             }
             delete activePresets[presetCategory.id]; // Remove active preset tracking
+            activePredefinedPresetName = ''; // Clear active predefined preset name
             updateSelectedPresetKeywordsDisplay(); // Clear display if preset deselected indirectly
         }
-
-        // If the updated category is 'custom-keywords', also save to local storage and re-render the custom keywords section
-        // This block is crucial for ensuring changes in custom keywords from Manual/Presets tab are reflected correctly.
-        if (categoryId === 'custom-keywords') {
-            customKeywordsSet = new Set(selectedOptions['custom-keywords']); // Sync the set
-            saveCustomKeywords();
-            if (!manualPage.classList.contains('hidden')) { // Only re-render if on the manual page
-                renderCustomKeywords();
-            }
+        // Also clear any active custom preset if a manual option that might conflict is picked
+        if (activeCustomPresetKeywords.size > 0) {
+             activeCustomPresetKeywords.clear();
+             document.querySelectorAll('#user-presets-display-area .preset-option-card').forEach(card => card.classList.remove('selected'));
+             updateSelectedPresetKeywordsDisplay();
         }
-
 
         // Update manual mode checkboxes visually to reflect changes from format tab
         const targetManualCategory = categoriesData.find(cat => cat.id === categoryId);
@@ -567,7 +577,6 @@ document.addEventListener('DOMContentLoaded', () => {
             finalPromptOutputManual.value = '';
             finalPromptOutputPresets.value = '';
             finalPromptOutputFormat.value = '';
-            // finalPromptOutputGenerate.value = ''; // Removed generate tab's output
             return;
         }
 
@@ -605,9 +614,19 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
-        // Add custom keywords (from Manual tab or Custom Presets) to the prompt at the end
-        if (selectedOptions['custom-keywords'] && selectedOptions['custom-keywords'].size > 0) {
-            promptParts.push(Array.from(selectedOptions['custom-keywords']).join(', '));
+        // Add active predefined preset name as a keyword
+        if (activePredefinedPresetName) {
+            promptParts.push(activePredefinedPresetName);
+        }
+
+        // Add user-typed custom keywords
+        if (userTypedCustomKeywords.size > 0) {
+            promptParts.push(Array.from(userTypedCustomKeywords).join(', '));
+        }
+
+        // Add active custom preset keywords (including its name)
+        if (activeCustomPresetKeywords.size > 0) {
+            promptParts.push(Array.from(activeCustomPresetKeywords).join(', '));
         }
 
 
@@ -617,7 +636,6 @@ document.addEventListener('DOMContentLoaded', () => {
         finalPromptOutputManual.value = finalPrompt;
         finalPromptOutputPresets.value = finalPrompt;
         finalPromptOutputFormat.value = finalPrompt;
-        // finalPromptOutputGenerate.value = finalPrompt; // Removed generate tab's output
     };
 
     const copyPrompt = (outputElementId) => {
@@ -639,7 +657,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 tempInput.select();
                 // For mobile devices, ensure selection is active
-                tempInput.setSelectionRange(0, tempInput.value.length);
+                tempInput.setSelectionRange(0, tempInput.value.length); // Corrected typo
 
                 const successful = document.execCommand('copy');
                 document.body.removeChild(tempInput); // Clean up
@@ -665,25 +683,25 @@ document.addEventListener('DOMContentLoaded', () => {
 
         finalPromptOutputManual.value = '';
         finalPromptOutputPresets.value = '';
-        finalPromptOutputFormat.value = ''; // Clear format tab's output
-        // finalPromptOutputGenerate.value = ''; // Removed generate tab's output
+        finalPromptOutputFormat.value = '';
 
         // Clear all selected options across all manual categories
         for (const categoryId in selectedOptions) {
             selectedOptions[categoryId].clear();
         }
-        // Clear active predefined presets
+        // Clear active predefined presets tracker
         for (const presetCatId in activePresets) {
             delete activePresets[presetCatId];
         }
-        // Clear custom keywords (manual tab & those from custom presets)
-        customKeywordsSet.clear();
-        localStorage.removeItem('prompter_custom_keywords');
-        selectedOptions['custom-keywords'].clear(); // Ensure this is also cleared
+        activePredefinedPresetName = ''; // Clear active predefined preset name
 
-        // Clear custom user presets
-        customUserPresets = [];
-        localStorage.removeItem('prompter_user_presets');
+        // Clear all custom keywords
+        userTypedCustomKeywords.clear();
+        activeCustomPresetKeywords.clear();
+        localStorage.removeItem('prompter_custom_keywords'); // Clear stored user-typed keywords
+        localStorage.removeItem('prompter_user_presets'); // Clear stored user presets
+
+        customUserPresets = []; // Reset user-defined presets array
 
 
         // Uncheck all manual mode checkboxes and remove 'selected' class
@@ -708,6 +726,10 @@ document.addEventListener('DOMContentLoaded', () => {
         document.querySelectorAll('#format-page textarea[data-category-id]').forEach(textarea => {
             textarea.value = '';
         });
+        const formatCustomKeywordsInput = document.getElementById('format-input-custom-keywords');
+        if (formatCustomKeywordsInput) {
+            formatCustomKeywordsInput.value = '';
+        }
 
         updateSelectedPresetKeywordsDisplay([]); // Clear the keyword display area with animation
         renderCustomKeywords(); // Re-render manual tab custom keywords display after reset
@@ -721,22 +743,23 @@ document.addEventListener('DOMContentLoaded', () => {
     const loadCustomKeywords = () => {
         const storedKeywords = localStorage.getItem('prompter_custom_keywords');
         if (storedKeywords) {
-            customKeywordsSet = new Set(JSON.parse(storedKeywords));
+            userTypedCustomKeywords = new Set(JSON.parse(storedKeywords));
         } else {
-            customKeywordsSet = new Set();
+            userTypedCustomKeywords = new Set();
         }
-        // Also update the selected options set for custom keywords based on loaded data
-        selectedOptions['custom-keywords'] = new Set(customKeywordsSet);
     };
 
     const saveCustomKeywords = () => {
-        localStorage.setItem('prompter_custom_keywords', JSON.stringify(Array.from(customKeywordsSet)));
+        localStorage.setItem('prompter_custom_keywords', JSON.stringify(Array.from(userTypedCustomKeywords)));
     };
 
     const renderCustomKeywords = () => {
         customKeywordsDisplayArea.innerHTML = ''; // Clear existing displayed keywords
 
-        customKeywordsSet.forEach(keyword => {
+        // Combine user-typed and active custom preset keywords for display in manual tab
+        const combinedKeywordsForDisplay = new Set([...userTypedCustomKeywords, ...activeCustomPresetKeywords]);
+
+        combinedKeywordsForDisplay.forEach(keyword => {
             const optionItem = document.createElement('div');
             optionItem.className = 'option-item p-3 rounded-md cursor-pointer text-white';
 
@@ -755,8 +778,8 @@ document.addEventListener('DOMContentLoaded', () => {
             const customCheckbox = optionItem.querySelector('input[type="checkbox"]');
             const customCheckboxVisual = optionItem.querySelector('.custom-checkbox-visual');
 
-            // Set initial state based on selectedOptions['custom-keywords']
-            if (selectedOptions['custom-keywords'].has(keyword)) {
+            // Mark as selected if it's either user-typed or from active custom preset
+            if (userTypedCustomKeywords.has(keyword) || activeCustomPresetKeywords.has(keyword)) {
                 optionItem.classList.add('selected');
                 customCheckbox.checked = true;
                 customCheckboxVisual.querySelector('svg').classList.remove('hidden');
@@ -764,16 +787,28 @@ document.addEventListener('DOMContentLoaded', () => {
 
             optionItem.addEventListener('click', () => {
                 customCheckbox.checked = !customCheckbox.checked;
-                if (customCheckbox.checked) {
-                    selectedOptions['custom-keywords'].add(keyword);
-                    optionItem.classList.add('selected');
-                    customCheckboxVisual.querySelector('svg').classList.remove('hidden');
-                } else {
-                    selectedOptions['custom-keywords'].delete(keyword);
-                    optionItem.classList.remove('selected');
-                    customCheckboxVisual.querySelector('svg').classList.add('hidden');
+                // Only modify userTypedCustomKeywords here, activeCustomPresetKeywords is managed by preset selection
+                if (userTypedCustomKeywords.has(keyword)) { // If it's a user-typed keyword, allow toggling
+                    if (customCheckbox.checked) {
+                        userTypedCustomKeywords.add(keyword);
+                        optionItem.classList.add('selected');
+                        customCheckboxVisual.querySelector('svg').classList.remove('hidden');
+                    } else {
+                        userTypedCustomKeywords.delete(keyword);
+                        optionItem.classList.remove('selected');
+                        customCheckboxVisual.querySelector('svg').classList.add('hidden');
+                    }
+                } else if (activeCustomPresetKeywords.has(keyword)) {
+                    // If it's from an active custom preset, deselect the preset itself
+                    activeCustomPresetKeywords.clear();
+                    document.querySelectorAll('#user-presets-display-area .preset-option-card').forEach(card => card.classList.remove('selected'));
+                    updateSelectedPresetKeywordsDisplay(); // Clear display if preset deselected indirectly
+                    // Re-render custom keywords to reflect change
+                    renderCustomKeywords();
                 }
-                updateFinalPrompt();
+
+                saveCustomKeywords();
+                updateFinalPrompt(); // Update prompt after adding new keywords
             });
 
             customKeywordsDisplayArea.appendChild(optionItem);
@@ -785,8 +820,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (inputText) {
             const newKeywords = inputText.split(',').map(k => k.trim()).filter(k => k !== '');
             newKeywords.forEach(keyword => {
-                customKeywordsSet.add(keyword);
-                selectedOptions['custom-keywords'].add(keyword); // Also add to selected for immediate prompt update
+                userTypedCustomKeywords.add(keyword);
             });
             saveCustomKeywords();
             renderCustomKeywords();
@@ -798,9 +832,13 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     clearCustomKeywordsBtn.addEventListener('click', () => {
-        customKeywordsSet.clear();
-        selectedOptions['custom-keywords'].clear(); // Clear selected custom keywords too
-        saveCustomKeywords();
+        userTypedCustomKeywords.clear();
+        activeCustomPresetKeywords.clear(); // Also clear any active custom preset keywords here
+        // Deselect any active custom preset cards visually
+        document.querySelectorAll('#user-presets-display-area .preset-option-card').forEach(card => card.classList.remove('selected'));
+        updateSelectedPresetKeywordsDisplay(); // Clear display of custom preset keywords
+
+        saveCustomKeywords(); // Saves only user-typed which is now empty
         renderCustomKeywords();
         updateFinalPrompt(); // Update prompt after clearing custom keywords
         showMessage('All custom keywords cleared.');
@@ -829,6 +867,7 @@ document.addEventListener('DOMContentLoaded', () => {
             presetCard.className = 'preset-option-card';
             presetCard.setAttribute('type', 'button');
 
+            // Placeholder image for user-defined presets - always generated
             const imageText = preset.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
             const imageUrl = `https://placehold.co/250x150/60A5FA/ffffff?text=${imageText}`; // Different color for custom
 
@@ -840,50 +879,44 @@ document.addEventListener('DOMContentLoaded', () => {
 
             presetCard.dataset.presetName = preset.name; // Store for identification
 
-            // Determine if this custom preset is currently "active" by checking if all its keywords are in selectedOptions['custom-keywords']
-            const isActive = preset.keywords.every(kw => selectedOptions['custom-keywords'].has(kw));
-            if (isActive && preset.keywords.length > 0) { // Only mark active if it has keywords and they are all selected
+            // Determine if this custom preset is currently "active"
+            const isActive = activeCustomPresetKeywords.has(preset.name); // Check if its name is in activeCustomPresetKeywords
+            if (isActive) {
                 presetCard.classList.add('selected');
             }
 
 
             presetCard.addEventListener('click', (event) => {
-                // Deselect all predefined active presets first (visual only)
-                document.querySelectorAll('#preset-categories-sections-container .preset-option-card.selected').forEach(card => {
-                    card.classList.remove('selected');
-                });
-                // Clear activePresets tracker
+                const isCurrentlySelected = presetCard.classList.contains('selected');
+
+                // Clear any active predefined preset
+                activePredefinedPresetName = '';
+                document.querySelectorAll('#preset-categories-sections-container .preset-option-card.selected').forEach(card => card.classList.remove('selected'));
                 for (const key in activePresets) {
                     delete activePresets[key];
                 }
+                // Clear all category-specific selections from predefined presets
+                categoriesData.forEach(cat => selectedOptions[cat.id]?.clear());
+                renderManualCategoriesWithOptions(); // Re-render manual options to uncheck them
 
 
-                // Toggle selection of this custom preset
-                const isCurrentlySelected = presetCard.classList.contains('selected');
+                // Deselect any other custom user preset that was previously selected (visually)
+                document.querySelectorAll('#user-presets-display-area .preset-option-card').forEach(card => card.classList.remove('selected'));
 
+                // Handle this specific custom preset
                 if (isCurrentlySelected) {
-                    // Deselect: remove all its keywords from selectedOptions['custom-keywords']
-                    preset.keywords.forEach(keyword => {
-                        selectedOptions['custom-keywords'].delete(keyword);
-                        customKeywordsSet.delete(keyword); // Also remove from manual tab's set
-                    });
-                    presetCard.classList.remove('selected');
+                    // Deselecting this custom preset: clear activeCustomPresetKeywords
+                    activeCustomPresetKeywords.clear();
                     updateSelectedPresetKeywordsDisplay([]); // Clear displayed keywords
                 } else {
-                    // Deselect any other active custom user preset in this area
-                    document.querySelectorAll('#user-presets-display-area .preset-option-card.selected').forEach(card => {
-                        card.classList.remove('selected');
-                    });
-                    // Select: add all its keywords to selectedOptions['custom-keywords']
-                    preset.keywords.forEach(keyword => {
-                        selectedOptions['custom-keywords'].add(keyword);
-                        customKeywordsSet.add(keyword); // Also add to manual tab's set
-                    });
-                    presetCard.classList.add('selected');
-                    updateSelectedPresetKeywordsDisplay(preset.keywords); // Display its keywords
+                    // Selecting this custom preset: populate activeCustomPresetKeywords
+                    activeCustomPresetKeywords.clear(); // Ensure only one custom preset is active
+                    activeCustomPresetKeywords.add(preset.name); // Add the preset's name itself
+                    preset.keywords.forEach(keyword => activeCustomPresetKeywords.add(keyword));
+                    presetCard.classList.add('selected'); // Visually select this one
+                    updateSelectedPresetKeywordsDisplay(Array.from(activeCustomPresetKeywords)); // Display its keywords
                 }
 
-                saveCustomKeywords(); // Save the updated custom keywords set
                 renderCustomKeywords(); // Update manual page's custom keywords display
                 updateFinalPrompt(); // Update the overall prompt
                 presetCard.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
@@ -929,11 +962,12 @@ document.addEventListener('DOMContentLoaded', () => {
     clearAllUserPresetsBtn.addEventListener('click', () => {
         customUserPresets = [];
         localStorage.removeItem('prompter_user_presets');
-        // Also clear any of these keywords that might be in the 'selectedOptions['custom-keywords']' if they are only from custom presets
-        // For simplicity, reset the main custom keywords if clearing all custom presets.
-        customKeywordsSet.clear();
-        selectedOptions['custom-keywords'].clear();
-        saveCustomKeywords(); // Save empty custom keywords
+
+        activeCustomPresetKeywords.clear(); // Clear active custom preset keywords
+        // Also clear any custom keywords that might be in userTypedCustomKeywords if they were solely from custom presets
+        // (assuming clearing custom presets means also clearing their influence from typed keywords if no other source)
+        userTypedCustomKeywords.clear(); // Clear all user-typed keywords, including any that were from custom presets
+        saveCustomKeywords(); // Save empty user-typed keywords
 
         renderUserPresets();
         renderCustomKeywords(); // Update manual page display
@@ -950,10 +984,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     copyPromptBtnFormat.addEventListener('click', () => copyPrompt('final-prompt-format'));
     resetBtnFormat.addEventListener('click', resetAll);
-
-    // Removed Generate tab buttons
-    // copyPromptBtnGenerate.addEventListener('click', () => copyPrompt('final-prompt-generate'));
-    // generateImageBtn.addEventListener('click', generateImage);
 
 
     // Event Listeners for Page Toggles
@@ -976,191 +1006,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
 
-    // API Key Management Functions (Removed as Generate tab is removed)
-    // const saveApiKey = (provider, key) => {
-    //     localStorage.setItem(`prompter_${provider}_api_key`, key);
-    // };
-
-    // const loadApiKey = (provider) => {
-    //     return localStorage.getItem(`prompter_${provider}_api_key`) || '';
-    // };
-
-    // Event listeners for API key inputs (save on input for continuous saving)
-    // if (openaiApiKeyInput) openaiApiKeyInput.addEventListener('input', () => {
-    //     saveApiKey('openai', openaiApiKeyInput.value.trim());
-    // });
-    // if (googleImageApiKeyInput) googleImageApiKeyInput.addEventListener('input', () => {
-    //     saveApiKey('google-image', googleImageApiKeyInput.value.trim());
-    // });
-
-    // Populate API keys on load
-    // if (openaiApiKeyInput) openaiApiKeyInput.value = loadApiKey('openai');
-    // if (googleImageApiKeyInput) googleImageApiKeyInput.value = loadApiKey('google-image');
-
-    // Clear API key buttons
-    // clearApiButtons.forEach(button => {
-    //     button.addEventListener('click', (event) => {
-    //         const provider = event.target.dataset.api;
-    //         localStorage.removeItem(`prompter_${provider}_api_key`);
-    //         if (provider === 'openai') {
-    //             if (openaiApiKeyInput) openaiApiKeyInput.value = '';
-    //         } else if (provider === 'google-image') {
-    //             if (googleImageApiKeyInput) googleImageApiKeyInput.value = '';
-    //         }
-    //         showMessage(`${provider.charAt(0).toUpperCase() + provider.slice(1)} API key cleared.`);
-    //     });
-    // });
-
-
-    // API Provider and Model Selection Logic (Removed as Generate tab is removed)
-    // function showModelSelection() {
-    //     if (currentApiProvider === 'openai') {
-    //         if (openaiModelSelection) openaiModelSelection.classList.remove('hidden');
-    //         if (googleImageModelSelection) googleImageModelSelection.classList.add('hidden');
-    //         const activeOpenAIModelBtn = openaiModelToggleGroup ? openaiModelToggleGroup.querySelector(`[data-model="${currentOpenAIModel}"]`) : null;
-    //         if (activeOpenAIModelBtn) {
-    //             updateSliderIndicator(openaiModelToggleGroup, openaiModelSliderIndicator, activeOpenAIModelBtn);
-    //         }
-    //     } else if (currentApiProvider === 'google-image') {
-    //         if (googleImageModelSelection) googleImageModelSelection.classList.remove('hidden');
-    //         if (openaiModelSelection) openaiModelSelection.classList.add('hidden');
-    //         const activeGoogleModelBtn = googleImageModelToggleGroup ? googleImageModelToggleGroup.querySelector(`[data-model="${currentGoogleImageModel}"]`) : null;
-    //         if (activeGoogleModelBtn) {
-    //             updateSliderIndicator(googleImageModelToggleGroup, googleImageModelSliderIndicator, activeGoogleModelBtn);
-    //         }
-    //     }
-    // }
-
-    // Event listeners for API Provider buttons (Removed)
-    // if (apiProviderButtons) apiProviderButtons.forEach(button => {
-    //     button.addEventListener('click', (event) => {
-    //         updateApiProviderSelection(event.currentTarget.dataset.provider);
-    //     });
-    // });
-
-    // Function to handle API provider button clicks and update state/UI (Removed)
-    // const updateApiProviderSelection = (provider) => {
-    //     currentApiProvider = provider;
-    //     if (apiProviderButtons) apiProviderButtons.forEach(btn => {
-    //         if (btn.dataset.provider === provider) {
-    //             btn.classList.add('active');
-    //             updateSliderIndicator(apiProviderToggleGroup, apiProviderSliderIndicator, btn);
-    //         } else {
-    //             btn.classList.remove('active');
-    //         }
-    //     });
-    //     showModelSelection();
-    // };
-
-    // Event listeners for OpenAI Model buttons (Removed)
-    // if (openaiModelButtons) openaiModelButtons.forEach(button => {
-    //     button.addEventListener('click', (event) => {
-    //         openaiModelButtons.forEach(btn => btn.classList.remove('active'));
-    //         event.currentTarget.classList.add('active');
-    //         currentOpenAIModel = event.currentTarget.dataset.model;
-    //         updateSliderIndicator(openaiModelToggleGroup, openaiModelSliderIndicator, event.currentTarget);
-    //     });
-    // });
-
-    // Event listeners for Google Imagen Model buttons (Removed)
-    // if (googleImageModelButtons) googleImageModelButtons.forEach(button => {
-    //     button.addEventListener('click', (event) => {
-    //         googleImageModelButtons.forEach(btn => btn.classList.remove('active'));
-    //         event.currentTarget.classList.add('active');
-    //         currentGoogleImageModel = event.currentTarget.dataset.model;
-    //         updateSliderIndicator(googleImageModelToggleGroup, googleImageModelSliderIndicator, event.currentTarget);
-    //     });
-    // });
-
-
-    // Function to generate image (Removed as Generate tab is removed)
-    // async function generateImage() {
-    //     const prompt = finalPromptOutputGenerate.value.trim();
-    //     if (!prompt) {
-    //         showMessage('Please create a prompt first!', 'error');
-    //         return;
-    //     }
-
-    //     let apiKey = '';
-    //     let apiUrl = '';
-    //     let payload = {};
-    //     let headers = { 'Content-Type': 'application/json' };
-    //     let model = '';
-
-    //     if (currentApiProvider === 'openai') {
-    //         apiKey = openaiApiKeyInput.value.trim();
-    //         if (!apiKey) {
-    //             showMessage('Please enter your OpenAI API Key!', 'error');
-    //             return;
-    //         }
-    //         model = currentOpenAIModel;
-    //         apiUrl = 'https://api.openai.com/v1/images/generations';
-    //         headers['Authorization'] = `Bearer ${apiKey}`;
-    //         payload = JSON.stringify({
-    //             prompt: prompt,
-    //             n: 1,
-    //             size: "512x512",
-    //             model: model
-    //         });
-    //     } else if (currentApiProvider === 'google-image') {
-    //         apiKey = "";
-    //         model = currentGoogleImageModel;
-    //         apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${model}:predict?key=${apiKey}`;
-    //         payload = JSON.stringify({
-    //             instances: { prompt: prompt },
-    //             parameters: { "sampleCount": 1 }
-    //         });
-    //     }
-
-    //     imageDisplayArea.innerHTML = ''; // Clear previous image
-    //     loadingIndicator.classList.remove('hidden'); // Show loading indicator
-
-    //     try {
-    //         let response;
-    //         let result;
-
-    //         if (currentApiProvider === 'openai') {
-    //             // Simulate OpenAI DALL-E API call with a placeholder
-    //             await new Promise(resolve => setTimeout(resolve, 2000)); // Simulate network delay
-    //             const placeholderImageUrl = `https://placehold.co/512x512/3B82F6/ffffff?text=${model.toUpperCase().replace('-', '+')}`;
-    //             const imgElement = document.createElement('img');
-    //             imgElement.src = placeholderImageUrl;
-    //             imgElement.alt = `Generated Image from OpenAI (${model})`;
-    //             imgElement.className = "w-full h-auto rounded-md";
-    //             imageDisplayArea.appendChild(imgElement);
-    //             showMessage(`Simulated OpenAI (${model}) image generation successful!`);
-    //         } else if (currentApiProvider === 'google-image') {
-    //             response = await fetch(apiUrl, {
-    //                 method: 'POST',
-    //                 headers: headers,
-    //                 body: JSON.stringify(payload)
-    //             });
-    //             result = await response.json();
-
-    //             if (result.predictions && result.predictions.length > 0 && result.predictions[0].bytesBase64Encoded) {
-    //                 const imageUrl = `data:image/png;base64,${result.predictions[0].bytesBase64Encoded}`;
-    //                 const imgElement = document.createElement('img');
-    //                 imgElement.src = imageUrl;
-    //                 imgElement.alt = `Generated Image from Google Imagen (${model})`;
-    //                 imgElement.className = "w-full h-auto rounded-md";
-    //                 imageDisplayArea.appendChild(imgElement);
-    //                 showMessage(`Google Imagen (${model}) image generation successful!`);
-    //             } else {
-    //                 showMessage(`Failed to generate image from Google Imagen (${model}). ` + (result.error ? result.error.message : 'Unknown error.'), 'error');
-    //                 console.error('Google Imagen API error:', result);
-    //                 imageDisplayArea.innerHTML = '<p class="text-gray-400 text-center">Error: Could not generate image. Check console for details.</p>';
-    //             }
-    //         }
-    //     } catch (error) {
-    //         console.error('Error generating image:', error);
-    //         showMessage('An error occurred during image generation.', 'error');
-    //         imageDisplayArea.innerHTML = '<p class="text-gray-400 text-center">Error: Could not generate image. Please check your API key and try again.</p>';
-    //     } finally {
-    //         loadingIndicator.classList.add('hidden'); // Hide loading indicator
-    //     }
-    // }
-
-
     // Initial setup
     presetsCategoriesData.forEach(category => {
         if (category.header.endsWith(' Presets')) {
@@ -1168,7 +1013,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    loadCustomKeywords(); // Load custom keywords from local storage on startup
+    loadCustomKeywords(); // Load user-typed custom keywords from local storage on startup
     loadUserPresets(); // Load user-defined presets on startup
 
     renderManualCategoriesWithOptions();
@@ -1186,23 +1031,6 @@ document.addEventListener('DOMContentLoaded', () => {
         updateFinalPrompt();
     });
 
-    // Initial API provider and model selection (Removed as Generate tab is removed)
-    // const initialApiProviderButton = apiProviderToggleGroup ? apiProviderToggleGroup.querySelector(`[data-provider="${currentApiProvider}"]`) : null;
-    // if (initialApiProviderButton) {
-    //     initialApiProviderButton.classList.add('active');
-    //     updateSliderIndicator(apiProviderToggleGroup, apiProviderSliderIndicator, initialApiProviderButton);
-    // }
-    // const initialOpenAIModelButton = openaiModelToggleGroup ? openaiModelToggleGroup.querySelector(`[data-model="${currentOpenAIModel}"]`) : null;
-    // if (initialOpenAIModelButton) {
-    //     initialOpenAIModelButton.classList.add('active');
-    // }
-    // const initialGoogleImageModelButton = googleImageModelToggleGroup ? googleImageModelToggleGroup.querySelector(`[data-model="${currentGoogleImageModel}"]`) : null;
-    // if (initialGoogleImageModelButton) {
-    //     initialGoogleImageModelButton.classList.add('active');
-    // }
-    // showModelSelection();
-
-
     window.addEventListener('load', () => {
         showPage('presets'); // Activate presets page by default
     });
@@ -1211,21 +1039,5 @@ document.addEventListener('DOMContentLoaded', () => {
         if (activeBtn) {
             updateSliderIndicator(pageToggleGroup, sliderIndicator, activeBtn);
         }
-        // Also update the API/model sliders on resize (Removed as Generate tab is removed)
-        // const currentApiProviderButton = apiProviderToggleGroup ? apiProviderToggleGroup.querySelector(`[data-provider="${currentApiProvider}"]`) : null;
-        // if (currentApiProviderButton) {
-        //     updateSliderIndicator(apiProviderToggleGroup, apiProviderSliderIndicator, currentApiProviderButton);
-        // }
-        // if (currentApiProvider === 'openai') {
-        //     const currentOpenAIModelButton = openaiModelToggleGroup ? openaiModelToggleGroup.querySelector(`[data-model="${currentOpenAIModel}"]`) : null;
-        //     if (currentOpenAIModelButton) {
-        //         updateSliderIndicator(openaiModelToggleGroup, openaiModelSliderIndicator, currentOpenAIModelButton);
-        //     }
-        // } else if (currentApiProvider === 'google-image') {
-        //     const currentGoogleImageModelButton = googleImageModelToggleGroup ? googleImageModelToggleGroup.querySelector(`[data-model="${currentGoogleImageModel}"]`) : null;
-        //     if (currentGoogleImageModelButton) {
-        //         updateSliderIndicator(googleImageModelToggleGroup, googleImageModelSliderIndicator, currentGoogleImageModelButton);
-        //     }
-        // }
     });
 });
