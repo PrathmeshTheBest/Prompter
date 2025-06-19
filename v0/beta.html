@@ -1,0 +1,1494 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prompter by Prathmesh</title>
+
+    <!-- Load Inter font from Google Fonts for general text -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Custom CSS styles -->
+    <style>
+        /* Define CSS Variables for Easy Font Customization */
+        :root {
+            --font-heading: 'Futura', 'Trebuchet MS', Arial, sans-serif;
+            --font-body: 'Inter', sans-serif;
+            --font-extra: 'Inter', sans-serif;
+        }
+
+        html, body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            overflow-x: hidden; /* Prevent horizontal scroll from elements */
+        }
+
+        body {
+            /* Retaining the original background image URL */
+            background-image: url('bg.jpg');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            background-color: #333366; /* Fallback color */
+            font-family: var(--font-body);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding-top: 5rem; /* Adjust based on header height */
+        }
+
+        /* Glassmorphism Styles (Consistent) */
+        .glass-header {
+            backdrop-filter: blur(10px);
+            background-color: rgba(255, 255, 255, 0.05);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+            box-shadow: 0 4px 18px 0 rgba(31, 38, 135, 0.4);
+        }
+
+        .glass-button {
+            backdrop-filter: blur(5px);
+            background-color: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 4px 15px 0 rgba(0, 0, 0, 0.18);
+            font-family: var(--font-extra);
+            transition: background-color 0.2s ease-in-out, border-color 0.2s ease-in-out, transform 0.2s ease-in-out;
+        }
+
+        .glass-button:hover {
+            transform: translateY(-2px);
+        }
+
+        /* Style for the greyed-out Trending button */
+        .glass-button.wip {
+            background-color: rgba(255, 255, 255, 0.03); /* More subtle grey */
+            border-color: rgba(255, 255, 255, 0.05); /* Lighter border */
+            color: rgba(255, 255, 255, 0.4); /* Faded text color */
+            cursor: not-allowed; /* Indicate it's not clickable */
+            box-shadow: none; /* Remove shadow to make it flat */
+            transform: none; /* No lift effect */
+        }
+
+        .glass-button.wip:hover {
+            background-color: rgba(255, 255, 255, 0.03); /* Keep same on hover */
+            border-color: rgba(255, 255, 255, 0.05); /* Keep same on hover */
+            color: rgba(255, 255, 255, 0.4); /* Keep same on hover */
+            transform: none; /* No transform on hover */
+        }
+
+
+        /* Standard Glass Element for Category Blocks and Page Containers */
+        .glass-element {
+            backdrop-filter: blur(10px);
+            background-color: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.03);
+            box-shadow: 0 4px 18px 0 rgba(31, 38, 135, 0.4);
+            transition: all 0.3s ease-in-out;
+        }
+
+        /* Style for individual options within categories (Manual tab) */
+        .option-item {
+            cursor: pointer;
+            backdrop-filter: blur(5px);
+            background-color: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 2px 8px 0 rgba(0, 0, 0, 0.1);
+            transition: all 0.2s ease-in-out;
+            font-family: var(--font-body);
+            color: white;
+            padding: 0.75rem;
+            border-radius: 0.375rem;
+            text-align: left;
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            gap: 0.5rem;
+        }
+
+        /* Hide the native checkbox, but keep it accessible */
+        .option-item input[type="checkbox"] {
+            position: absolute;
+            opacity: 0;
+            width: 1px;
+            height: 1px;
+            overflow: hidden;
+            clip: rect(0 0 0 0);
+            white-space: nowrap;
+        }
+
+        /* Custom checkbox visual */
+        .custom-checkbox-visual {
+            width: 1.25rem;
+            height: 1.25rem;
+            border: 2px solid rgba(255, 255, 255, 0.7);
+            border-radius: 0.25rem;
+            background-color: rgba(255, 255, 255, 0.1);
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background-color 0.2s ease-in-out, border-color 0.2s ease-in-out;
+        }
+
+        /* Checkmark SVG style */
+        .custom-checkbox-visual svg {
+            color: #3B82F6;
+            transition: transform 0.12s ease-in-out;
+            transform: scale(0);
+        }
+
+        .option-item.selected .custom-checkbox-visual {
+            background-color: #3B82F6;
+            border-color: #3B82F6;
+        }
+        .option-item.selected .custom-checkbox-visual svg {
+            transform: scale(1);
+            color: white;
+        }
+
+        /* Hover for manual options */
+        .option-item:hover {
+            background-color: rgba(255, 255, 255, 0.15);
+        }
+
+        /* Custom Scrollbar Styles for Options Containers */
+        .custom-scroll::-webkit-scrollbar {
+            height: 8px;
+            width: 8px;
+        }
+
+        .custom-scroll::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+        }
+
+        .custom-scroll::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .custom-scroll::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        /* Redesigned Toggle Button Group Styles (Slider Effect for main menu) */
+        .toggle-group {
+            position: relative;
+            background-color: rgba(255, 255, 255, 0.08); /* Background for the track */
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 9999px; /* Fully rounded capsule */
+            padding: 4px; /* Internal padding for the slider */
+            display: flex;
+            width: 300px; /* Fixed width for consistency, adjust as needed */
+            box-shadow: inset 0 1px 3px rgba(0,0,0,0.3); /* Inner shadow for depth */
+        }
+
+        .toggle-group .toggle-button {
+            flex-grow: 1;
+            text-align: center;
+            color: white;
+            font-size: 0.875rem;
+            font-weight: 600;
+            padding: 0.5rem 1.25rem; /* py-2 px-5 */
+            border-radius: 9999px;
+            z-index: 10;
+            cursor: pointer;
+            background-color: transparent;
+            border: none;
+            transition: color 0.3s ease-in-out;
+            position: relative;
+        }
+
+        .toggle-group .toggle-button.active {
+            color: #ffffff;
+        }
+
+        .toggle-group .toggle-button:hover:not(.active) {
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        .slider-indicator {
+            position: absolute;
+            top: 4px;
+            bottom: 4px;
+            background-color: rgba(66, 153, 225, 0.5);
+            border: 1px solid rgba(66, 153, 225, 0.8);
+            border-radius: 9999px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+            transition: left 0.3s ease-in-out, width 0.3s ease-in-out;
+            z-index: 0;
+        }
+
+        /* Styles for the new horizontal preset sections/strips */
+        .preset-section-strip {
+            display: flex;
+            overflow-x: auto; /* Enable horizontal scrolling */
+            -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
+            gap: 1rem; /* Space between preset cards */
+            padding-bottom: 0.5rem; /* For scrollbar visibility */
+            padding-top: 0.5rem;
+            scrollbar-width: thin; /* Firefox */
+            scrollbar-color: rgba(255, 255, 255, 0.2) rgba(255, 255, 255, 0.05); /* Firefox thumb and track */
+        }
+
+        .preset-option-card {
+            flex-shrink: 0; /* Prevent cards from shrinking */
+            width: 250px; /* Larger rectangular width */
+            height: 150px; /* Larger rectangular height */
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            justify-content: flex-end;
+            padding: 0.75rem;
+            border-radius: 0.75rem;
+            background-color: rgba(255, 255, 255, 0.08);
+            background-size: cover;
+            background-position: center;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+            color: white;
+            cursor: pointer;
+            transition: all 0.2s ease-in-out;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .preset-option-card:hover {
+            background-color: rgba(255, 255, 255, 0.15);
+            transform: translateY(-3px);
+            box-shadow: 0 6px 15px rgba(0,0,0,0.3);
+        }
+
+        .preset-option-card.selected {
+            background-color: rgba(66, 153, 225, 0.7);
+            border-color: rgba(66, 153, 225, 1);
+            box-shadow: 0 4px 15px rgba(66, 153, 225, 0.6);
+            font-weight: 700;
+        }
+
+        .preset-name-overlay {
+            position: absolute;
+            bottom: 0.5rem;
+            right: 0.5rem;
+            background-color: rgba(0, 0, 0, 0.6);
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.375rem;
+            font-weight: 600;
+            font-size: 0.85rem;
+            line-height: 1.2;
+            word-wrap: break-word;
+            text-align: right;
+            z-index: 2;
+            max-width: calc(100% - 1rem);
+        }
+
+        /* Hide the default scrollbar for Webkit browsers for inner strips */
+        .preset-section-strip::-webkit-scrollbar {
+            height: 6px;
+        }
+
+        .preset-section-strip::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+        }
+
+        .preset-section-strip::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+        }
+
+        .preset-section-strip::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        /* Styling for the keywords display area */
+        #selected-preset-keywords-display {
+            opacity: 0;
+            transform: translateY(20px); /* Start off-screen below */
+            transition: opacity 0.3s ease-out, transform 0.3s ease-out; /* Animation properties */
+            margin-top: 1.5rem; /* Add some space above it, adjust as needed */
+            margin-bottom: 1.5rem; /* Add space below it, if not followed by another fixed element */
+        }
+        /* Hidden class to control visibility via JS */
+        #selected-preset-keywords-display.hidden {
+            opacity: 0;
+            transform: translateY(20px);
+            pointer-events: none; /* Disable interactions when hidden */
+            height: 0; /* Collapse height when hidden to avoid taking up space */
+            padding-top: 0;
+            padding-bottom: 0;
+            margin-top: 0;
+            margin-bottom: 0;
+            overflow: hidden; /* Hide content during height collapse */
+        }
+        /* When visible, ensure padding/margin are applied */
+        #selected-preset-keywords-display:not(.hidden) {
+             padding-top: 1rem;
+             padding-bottom: 1rem;
+             margin-top: 1.5rem;
+             margin-bottom: 1.5rem;
+             height: auto; /* Let content dictate height */
+        }
+
+    </style>
+</head>
+<body>
+    <!-- Header Section -->
+    <header class="glass-header w-full py-3 px-6 flex justify-between items-center z-20 fixed top-0 left-0 right-0">
+        <div class="flex items-baseline space-x-2">
+            <h1 class="text-white text-3xl font-bold" style="font-family: var(--font-heading);">Prompter</h1>
+            <span class="text-white text-sm opacity-50 font-normal">by Prathmesh</span>
+        </div>
+
+        <!-- 3-Way Toggle for Pages (Slider Effect) -->
+        <div id="page-toggle-group" class="toggle-group">
+            <div id="slider-indicator" class="slider-indicator"></div>
+            <button class="toggle-button" data-page="manual">Manual</button>
+            <button class="toggle-button" data-page="presets">Presets</button>
+            <button class="toggle-button" data-page="format">Format</button>
+        </div>
+
+        <button class="glass-button wip text-white py-1.5 px-5 rounded-md text-base font-semibold" disabled>
+            Trending 🔥 (WIP)
+        </button>
+    </header>
+
+    <!-- Main Content Area - Page Containers -->
+    <main class="flex-grow w-full max-w-4xl p-4 flex flex-col items-center space-y-8">
+
+        <!-- Manual Page -->
+        <div id="manual-page" class="page-content w-full flex flex-col items-center space-y-8 hidden">
+            <!-- Subject Input -->
+            <div class="glass-element p-6 rounded-lg w-full">
+                <label for="subject-input" class="text-white text-xl font-semibold mb-3 block" style="font-family: var(--font-heading);">
+                    What is the main subject of your image?
+                </label>
+                <input type="text" id="subject-input" placeholder="e.g., A majestic lion, a futuristic spaceship, a serene mountain landscape"
+                       class="w-full p-3 rounded-md bg-transparent text-white border border-gray-600 focus:border-blue-500 focus:outline-none placeholder-gray-400">
+            </div>
+
+            <!-- Dynamic Categories Sections -->
+            <div id="categories-sections-container" class="w-full space-y-8">
+                <!-- Categories and their options will be loaded here by JavaScript -->
+            </div>
+
+            <!-- Generated Prompt Output (Manual Page) -->
+            <div class="glass-element p-6 rounded-lg w-full flex flex-col items-center">
+                <h2 class="text-white text-2xl font-bold mb-4" style="font-family: var(--font-heading);">
+                    Your Generated Prompt
+                </h2>
+                <textarea id="final-prompt-manual" readonly rows="8"
+                          class="w-full p-4 rounded-md bg-transparent text-white border border-gray-600 focus:outline-none resize-none mb-4 custom-scroll"></textarea>
+
+                <div class="flex flex-wrap justify-center gap-4 w-full">
+                    <button id="copy-prompt-btn-manual" class="glass-button text-white py-2 px-6 rounded-md text-lg font-semibold
+                                   hover:bg-white hover:text-blue-700 focus:outline-none focus:ring-2 focus:ring-white focus:ring-opacity-75">
+                        Copy Prompt
+                    </button>
+                    <button id="reset-btn-manual" class="glass-button text-white py-2 px-6 rounded-md text-lg font-semibold
+                                   hover:bg-red-700 hover:text-white focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-75">
+                        Reset
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Presets Page (Default Active) -->
+        <div id="presets-page" class="page-content w-full flex flex-col items-center space-y-8">
+            <!-- Subject Input (shared) -->
+            <div class="glass-element p-6 rounded-lg w-full">
+                <label for="subject-input-presets" class="text-white text-xl font-semibold mb-3 block" style="font-family: var(--font-heading);">
+                    What is the main subject of your image?
+                </label>
+                <input type="text" id="subject-input-presets" placeholder="e.g., A majestic lion, a futuristic spaceship, a serene mountain landscape"
+                       class="w-full p-3 rounded-md bg-transparent text-white border border-gray-600 focus:border-blue-500 focus:outline-none placeholder-gray-400">
+            </div>
+
+            <!-- Dynamic Preset Categories Sections -->
+            <div id="preset-categories-sections-container" class="w-full space-y-8">
+                <!-- Preset categories and their options will be loaded here by JavaScript -->
+            </div>
+
+            <!-- Selected Preset Keywords Display Area (Now in normal flow, dynamically positioned by JS) -->
+            <div id="selected-preset-keywords-display" class="glass-element p-4 rounded-lg w-full text-white text-sm md:text-base hidden">
+                <h3 class="font-semibold mb-2" style="font-family: var(--font-heading);">Selected Preset Keywords:</h3>
+                <p id="current-preset-keywords" class="opacity-80"></p>
+            </div>
+
+            <!-- Generated Prompt Output (Presets Page) -->
+            <div class="glass-element p-6 rounded-lg w-full flex flex-col items-center">
+                <h2 class="text-white text-2xl font-bold mb-4" style="font-family: var(--font-heading);">
+                    Your Generated Prompt
+                </h2>
+                <textarea id="final-prompt-presets" readonly rows="8"
+                          class="w-full p-4 rounded-md bg-transparent text-white border border-gray-600 focus:outline-none resize-none mb-4 custom-scroll"></textarea>
+
+                <div class="flex flex-wrap justify-center gap-4 w-full">
+                    <button id="copy-prompt-btn-presets" class="glass-button text-white py-2 px-6 rounded-md text-lg font-semibold
+                                   hover:bg-white hover:text-blue-700 focus:outline-none focus:ring-2 focus:ring-white focus:ring-opacity-75">
+                        Copy Prompt
+                    </button>
+                    <button id="reset-btn-presets" class="glass-button text-white py-2 px-6 rounded-md text-lg font-semibold
+                                   hover:bg-red-700 hover:text-white focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-75">
+                        Reset
+                    </button>
+                </div>
+            </div>
+        </div>
+
+
+        <!-- Format Page (Now Interactive) -->
+        <div id="format-page" class="page-content w-full hidden flex flex-col items-center space-y-8">
+            <!-- Subject Input (shared) -->
+            <div class="glass-element p-6 rounded-lg w-full">
+                <label for="subject-input-format" class="text-white text-xl font-semibold mb-3 block" style="font-family: var(--font-heading);">
+                    What is the main subject of your image?
+                </label>
+                <input type="text" id="subject-input-format" placeholder="e.g., A majestic lion, a futuristic spaceship, a serene mountain landscape"
+                       class="w-full p-3 rounded-md bg-transparent text-white border border-gray-600 focus:border-blue-500 focus:outline-none placeholder-gray-400">
+            </div>
+
+            <!-- Dynamic Format Categories Sections -->
+            <div id="format-categories-sections-container" class="w-full space-y-8">
+                <!-- Format categories and their textareas will be loaded here by JavaScript -->
+            </div>
+
+            <!-- Generated Prompt Output (Format Page) -->
+            <div class="glass-element p-6 rounded-lg w-full flex flex-col items-center">
+                <h2 class="text-white text-2xl font-bold mb-4" style="font-family: var(--font-heading);">
+                    Your Generated Prompt
+                </h2>
+                <textarea id="final-prompt-format" readonly rows="8"
+                          class="w-full p-4 rounded-md bg-transparent text-white border border-gray-600 focus:outline-none resize-none mb-4 custom-scroll"></textarea>
+
+                <div class="flex flex-wrap justify-center gap-4 w-full">
+                    <button id="copy-prompt-btn-format" class="glass-button text-white py-2 px-6 rounded-md text-lg font-semibold
+                                   hover:bg-white hover:text-blue-700 focus:outline-none focus:ring-2 focus:ring-white focus:ring-opacity-75">
+                        Copy Prompt
+                    </button>
+                    <button id="reset-btn-format" class="glass-button text-white py-2 px-6 rounded-md text-lg font-semibold
+                                   hover:bg-red-700 hover:text-white focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-75">
+                        Reset
+                    </button>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Message Box for confirmation/errors -->
+    <div id="message-box" class="fixed bottom-4 left-1/2 -translate-x-1/2 p-3 rounded-md text-white bg-blue-600 shadow-lg hidden z-50"></div>
+
+    <!-- JavaScript for dynamic app logic -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const categoriesData = [
+                // Manual Mode Categories - These map directly to preset keywords
+                {
+                    id: 'subject-details',
+                    header: 'Subject Details',
+                    description: 'Specific attributes of the main subject. (e.g., "Majestic, Ancient, Glowing")',
+                    options: {
+                        'Adjectives': ['Majestic', 'Tiny', 'Ancient', 'Modern', 'Futuristic', 'Worn', 'Pristine', 'Glowing', 'Dark', 'Bright', 'Fierce', 'Gentle', 'Elegant', 'Rugged', 'Delicate', 'Twisted', 'Smooth', 'Rough', 'Organic', 'Geometric', 'Robotic', 'Humanoid', 'Abstract', 'Ethereal', 'Solid', 'Liquid', 'Gaseous', 'Broken', 'Repaired', 'Sparkling', 'Dull', 'Vibrant', 'Muted', 'Transparent', 'Opaque', 'Intricate', 'Ornate', 'Highly Detailed', 'Sleek', 'Bold', 'Intense', 'Young', 'Energetic', 'Smiling', 'Active', 'Mature', 'Thoughtful', 'Calm', 'Wise', 'Wrinkled', 'Strong', 'Confident', 'Fashionable', 'Stylish'], // Added terms for human subjects
+                        'Colors': ['Red', 'Blue', 'Green', 'Yellow', 'Orange', 'Purple', 'Pink', 'Black', 'White', 'Grey', 'Brown', 'Gold', 'Silver', 'Bronze', 'Rainbow', 'Monochromatic'],
+                        'Material/Texture': ['Metallic', 'Wooden', 'Stone', 'Glass', 'Fabric', 'Fur', 'Skin', 'Water', 'Ice', 'Fire', 'Smoke', 'Cloud', 'Crystal', 'Plastic', 'Rubber', 'Leather', 'Concrete', 'Paper', 'Cloth', 'Silk', 'Velvet', 'Carbon Fiber'],
+                        'Condition': ['New', 'Old', 'Damaged', 'Pristine', 'Rusty', 'Mossy', 'Glowing', 'Broken', 'Repaired', 'Burning', 'Wet', 'Dry', 'Frozen', 'Melted', 'Growing', 'Dying']
+                    }
+                },
+                {
+                    id: 'action-pose-expression',
+                    header: 'Action/State',
+                    description: 'What the subject is doing or its current state. (e.g., "Running, Joyful, Leaping")',
+                    options: {
+                        'Verbs (Active)': ['Running', 'Jumping', 'Flying', 'Swimming', 'Standing', 'Sitting', 'Lying', 'Roaring', 'Whispering', 'Dancing', 'Fighting', 'Building', 'Destroying', 'Eating', 'Drinking', 'Reading', 'Writing', 'Painting', 'Exploring', 'Discovering', 'Hiding', 'Chasing', 'Escaping', 'Floating', 'Sinking', 'Growing', 'Shrinking', 'Exploding', 'Collapsing', 'Blending', 'Forming'],
+                        'Expressions (for living subjects)': ['Smiling', 'Frowning', 'Laughing', 'Crying', 'Angry', 'Happy', 'Sad', 'Surprised', 'Calm', 'Determined', 'Confused', 'Scared', 'Joyful', 'Thoughtful', 'Peaceful', 'Stressed', 'Relaxed', 'Curious', 'Bored', 'Excited'],
+                        'Poses (for living subjects/objects)': ['Leaping', 'Crouching', 'Stretching', 'Resting', 'Alert', 'Playful', 'Aggressive', 'Defensive', 'Elegant', 'Awkward', 'Dynamic', 'Static', 'Balanced', 'Unbalanced', 'Suspended', 'Grounded']
+                    }
+                },
+                {
+                    id: 'environment-setting',
+                    header: 'Environment',
+                    description: 'The background or location of the subject. (e.g., "Forest, Night, Rainy")',
+                    options: {
+                        'Type': ['Forest', 'Desert', 'Mountain', 'Ocean', 'Lake', 'River', 'City', 'Town', 'Village', 'Space', 'Alien Planet', 'Underwater', 'Sky', 'Clouds', 'Volcano', 'Cave', 'Ruins', 'Castle Interior', 'Modern Apartment', 'Ancient Temple', 'Sci-Fi Lab', 'Cyberpunk Alley', 'Steampunk City', 'Post-Apocalyptic Wasteland', 'Dreamscape', 'Abstract Background', 'Studio', 'Museum', 'Art Gallery', 'Battlefield', 'School', 'Library', 'Office', 'Crowded', 'Outdoors', 'Interior'], // Added terms for human environments
+                        'Time of Day': ['Dawn', 'Morning', 'Midday', 'Afternoon', 'Dusk', 'Night', 'Midnight'],
+                        'Weather/Atmosphere': ['Sunny', 'Cloudy', 'Rainy', 'Snowy', 'Foggy', 'Misty', 'Stormy', 'Clear', 'Hazy', 'Windy', 'Calm', 'Thunder', 'Lightning', 'Rainbow', 'Aurora', 'Blizzard', 'Dust Storm'],
+                        'Season': ['Spring', 'Summer', 'Autumn (Fall)', 'Winter'],
+                        'Specific Elements': ['Trees', 'Rocks', 'Water', 'Buildings', 'Vehicles', 'People', 'Animals', 'Plants', 'Stars', 'Moons', 'Plantes', 'Alien Flora', 'Ancient Artifacts', 'Futuristic Technology', 'Debris', 'Smoke', 'Fire', 'Ice Formations', 'Lava', 'Shadows']
+                    }
+                },
+                {
+                    id: 'lighting',
+                    header: 'Lighting',
+                    description: 'The characteristics of light in the scene. (e.g., "Soft, Cinematic, From Above")',
+                    options: {
+                        'Type': ['Natural Light', 'Artificial Light', 'Studio Lighting', 'Cinematic Lighting', 'Volumetric Lighting', 'Global Illumination', 'Ambient Occlusion', 'Rim Lighting', 'Backlighting', 'Side Lighting', 'Front Lighting', 'Top-Down Lighting', 'Bottom-Up Lighting', 'Spotlight', 'Floodlight', 'Neon Glow', 'Bioluminescence', 'Luminous', 'Moonlight', 'Sunlight', 'Starlight', 'Firelight', 'Candlelight', 'Electric Light', 'LED Lighting'],
+                        'Quality': ['Soft', 'Harsh', 'Diffused', 'Sharp', 'Bright', 'Dim', 'Moody', 'Ethereal', 'Dramatic', 'Mysterious', 'Warm', 'Cool', 'Cold', 'Vibrant', 'Muted', 'Glimmering', 'Shimmering', 'Pulsating', 'Flickering', 'Balanced', 'Contrasting Light'], // Added terms for human lighting
+                        'Direction': ['From Above', 'From Below', 'From Left', 'From Right', 'From Front', 'From Back', 'All Around']
+                    }
+                },
+                {
+                    id: 'style-art-medium',
+                    header: 'Art Style',
+                    description: 'The artistic aesthetic or medium of the image. (e.g., "Photorealistic, Oil Painting, Cyberpunk")',
+                    options: {
+                        'Art Mediums': ['Photorealistic', 'Digital Art', 'Concept Art', 'Oil Painting', 'Watercolor', 'Acrylic Painting', 'Pencil Sketch', 'Charcoal Drawing', 'Ink Drawing', 'Pastel Art', '3D Render', 'Pixel Art', 'Vector Art', 'Claymation', 'Stop Motion', 'Embroidery', 'Mosaic', 'Stained Glass'],
+                        'Artistic Movements': ['Impressionism', 'Surrealism', 'Cubism', 'Abstract Expressionism', 'Pop Art', 'Art Nouveau', 'Baroque', 'Renaissance', 'Romanticism', 'Minimalism', 'Futurism', 'Dadaism'],
+                        'Visual Styles': ['Anime', 'Manga', 'Cartoon', 'Comic Book Art', 'Realistic', 'Hyperrealistic', 'Stylized', 'Abstract', 'Sci-Fi', 'Fantasy', 'Cyberpunk', 'Steampunk', 'Dieselpunk', 'Biopunk', 'Solarpunk', 'Retro-futurism', 'Vintage', 'Grunge', 'Gothic', 'Rustic', 'Industrial', 'Sleek', 'Futuristic', 'Whimsical', 'Dark Fantasy', 'High Fantasy', 'Low Poly', 'Vaporwave', 'Glitch Art', 'ASCII Art', 'Psychedelic', 'Street Art', 'Graffiti'],
+                        'Influenced By (Artists/Studios)': ['In the style of [Artist Name e.g., Van Gogh, Leonardo da Vinci, Greg Rutkowski, H.R. Giger, Hayao Miyazaki, Moebius]', 'Inspired by [Studio e.g., Studio Ghibli, Pixar, Disney, DreamWorks, Industrial Light & Magic]'],
+                        'Photography Specifics': ['Macro Photography', 'Wide Angle', 'Telephoto Lens', 'Tilt-Shift', 'Bokeh', 'Shallow Depth of Field', 'Long Exposure', 'HDR', 'Fisheye Lens', 'Anamorphic Lens', 'Lens Flare', 'Portrait'] // Added 'Portrait'
+                    }
+                },
+                {
+                    id: 'composition-perspective',
+                    header: 'Composition',
+                    description: 'How the image is framed and viewed. (e.g., "Close-up, Eye-level, Rule of Thirds")',
+                    options: {
+                        'Shot Type': ['Close-up', 'Medium Shot', 'Full Shot', 'Wide Shot', 'Extreme Wide Shot', 'Panoramic', 'Macro Shot', 'Portrait', 'Landscape', 'Group Shot'],
+                        'Angle': ['Eye-level', 'Low Angle', 'High Angle', 'Overhead (Top-down)', 'Worm\'s Eye View', 'Bird\'s Eye View', 'Dutch Angle (Canted)'],
+                        'Focus': ['Sharp Focus', 'Soft Focus', 'Shallow Depth of Field', 'Deep Depth of Field', 'Blurry Background', 'Clear Background'],
+                        'Framing': ['Rule of Thirds', 'Golden Ratio', 'Centered', 'Off-center', 'Symmetrical', 'Asymmetrical', 'Leading Lines', 'Negative Space', 'Foreground Elements', 'Background Elements'],
+                        'Movement': ['Dynamic Composition', 'Static Composition', 'Motion Blur', 'Panning Shot']
+                    }
+                },
+                {
+                    id: 'quality-detail',
+                    header: 'Quality',
+                    description: 'Terms to enhance the overall fidelity and rendering of the image. (e.g., "8K, Ultra Detailed, Cinematic")',
+                    options: {
+                        'Resolution': ['8K', '4K', 'Ultra HD', 'High Resolution'],
+                        'Detail Level': ['Highly Detailed', 'Ultra Detailed', 'Intricate Details', 'Fine Details', 'Complex', 'Simple'],
+                        'Rendering Engines (implies quality)': ['Unreal Engine 5', 'Octane Render', 'V-Ray', 'Arnold Render', 'Redshift', 'Cycles Render'],
+                        'General Quality Terms': ['Masterpiece', 'Best Quality', 'High Quality', 'Photorealistic Render', 'Studio Quality', 'Cinematic', 'Epic', 'Grand', 'Majestic', 'Immersive', 'Vivid', 'Crisp', 'Sharp', 'Clear', 'Smooth', 'Polished', 'Gritty', 'Raw'],
+                        'Color Quality': ['Vibrant Colors', 'Rich Colors', 'Muted Colors', 'Desaturated Colors', 'Monochromatic', 'Pastel Colors', 'Warm Tones', 'Cool Tones', 'Earth Tones']
+                    }
+                }
+            ];
+
+            const presetsCategoriesData = [
+                // Presets for Subject Details (combining adjectives, materials, etc. for a practical look)
+                {
+                    id: 'preset-subject-details',
+                    header: 'Subject Attributes',
+                    description: 'Curated sets of adjectives and material descriptions for your main subject.',
+                    targetCategory: 'subject-details', // The manual category this preset targets
+                    options: [
+                        {
+                            name: 'Vibrant & Modern',
+                            keywords: ['Vibrant', 'Sleek', 'Geometric', 'Metallic', 'Bright']
+                        },
+                        {
+                            name: 'Aged & Textured',
+                            keywords: ['Ancient', 'Worn', 'Rusty', 'Rough', 'Mossy', 'Stone']
+                        },
+                        {
+                            name: 'Delicate & Ethereal',
+                            keywords: ['Delicate', 'Transparent', 'Glowing', 'Ethereal', 'Soft', 'Glass']
+                        },
+                        {
+                            name: 'Rugged & Durable',
+                            keywords: ['Rugged', 'Damaged', 'Leather', 'Concrete', 'Worn']
+                        },
+                        {
+                            name: 'Organic & Natural',
+                            keywords: ['Organic', 'Wooden', 'Mossy', 'Green', 'Smooth']
+                        },
+                        {
+                            name: 'Industrial & Grimy',
+                            keywords: ['Industrial', 'Gritty', 'Metallic', 'Rusty', 'Damaged']
+                        },
+                        {
+                            name: 'Luxurious & Polished',
+                            keywords: ['Pristine', 'Polished', 'Gold', 'Silver', 'Smooth', 'Elegant']
+                        },
+                        // NEW Human Subject Presets
+                        { name: 'Young & Energetic Human', keywords: ['Young', 'Vibrant', 'Energetic', 'Smiling', 'Active'] },
+                        { name: 'Mature & Thoughtful Human', keywords: ['Mature', 'Thoughtful', 'Calm', 'Wise', 'Wrinkled'] },
+                        { name: 'Heroic & Determined Human', keywords: ['Fierce', 'Determined', 'Strong', 'Bold', 'Confident'] },
+                        { name: 'Fashionable & Stylish Human', keywords: ['Elegant', 'Sleek', 'Modern', 'Pristine', 'Vibrant'] },
+                        { name: 'Average Person', keywords: ['Normal', 'Casual', 'Everyday'] } // More basic, practical
+                    ]
+                },
+                // NEW Presets for Action/Pose/Expression for Human Subjects
+                {
+                    id: 'preset-action-pose-expression',
+                    header: 'Human Action & Pose',
+                    description: 'Common poses, actions, and expressions for human subjects.',
+                    targetCategory: 'action-pose-expression',
+                    options: [
+                        { name: 'Dynamic Action Pose', keywords: ['Leaping', 'Running', 'Fighting', 'Dynamic Composition', 'Motion Blur'] },
+                        { name: 'Calm & Relaxed Pose', keywords: ['Resting', 'Sitting', 'Peaceful', 'Calm', 'Relaxed'] },
+                        { name: 'Confident Stance', keywords: ['Standing', 'Alert', 'Determined', 'Bold'] },
+                        { name: 'Candid Everyday Moment', keywords: ['Reading', 'Drinking', 'Laughing', 'Natural Light'] },
+                        { name: 'Intense Focused Expression', keywords: ['Angry', 'Determined', 'Intense', 'Sharp Focus'] },
+                        { name: 'Joyful & Expressive', keywords: ['Smiling', 'Laughing', 'Joyful', 'Vibrant'] },
+                        { name: 'Thoughtful Gaze', keywords: ['Thoughtful', 'Calm', 'Pensive'] },
+                        { name: 'Dancing Gracefully', keywords: ['Dancing', 'Elegant', 'Dynamic'] }
+                    ]
+                },
+                // Presets for Environment Setting
+                {
+                    id: 'preset-environment-setting', // Maps to manual 'environment-setting'
+                    header: 'Environment & Atmosphere',
+                    description: 'Common environmental scenes with typical weather/time conditions.',
+                    targetCategory: 'environment-setting',
+                    options: [
+                        {
+                            name: 'Urban Night Scene',
+                            keywords: ['City', 'Night', 'Rainy', 'Cyberpunk Alley', 'Buildings', 'Neon Glow']
+                        },
+                        {
+                            name: 'Sunny Forest Day',
+                            keywords: ['Forest', 'Morning', 'Sunny', 'Clear', 'Trees', 'Plants', 'Natural Light', 'Warm']
+                        },
+                        {
+                            name: 'Misty Mountain Dawn',
+                            keywords: ['Mountain', 'Dawn', 'Foggy', 'Misty', 'Clear', 'Ethereal']
+                        },
+                        {
+                            name: 'Desert Sunset',
+                            keywords: ['Desert', 'Dusk', 'Hazy', 'Warm Tones', 'Silhouetted']
+                        },
+                        {
+                            name: 'Underwater Reef',
+                            keywords: ['Underwater', 'Ocean', 'Clear', 'Vivid Colors', 'Plants', 'Bioluminescence']
+                        },
+                        {
+                            name: 'Sci-Fi Laboratory',
+                            keywords: ['Sci-Fi Lab', 'Futuristic', 'Artificial Light', 'Sleek', 'Glowing']
+                        },
+                        {
+                            name: 'Cozy Cabin Interior',
+                            keywords: ['Wooden', 'Interior', 'Warm Light', 'Comfortable']
+                        },
+                        // NEW Human Environment Presets
+                        { name: 'Busy Street Market', keywords: ['City', 'Crowded', 'Day', 'Vibrant', 'Outdoors'] },
+                        { name: 'Minimalist Studio Backdrop', keywords: ['Studio', 'Simple', 'Clean', 'Smooth', 'White'] },
+                        { name: 'Lush Garden Backdrop', keywords: ['Plants', 'Green', 'Sunny', 'Outdoors', 'Natural Light'] },
+                        { name: 'Historic Alleyway', keywords: ['City', 'Old', 'Stone', 'Damaged', 'Gritty', 'Industrial'] },
+                        { name: 'Modern Office Space', keywords: ['Office', 'Modern', 'Sleek', 'Artificial Light'] },
+                        { name: 'Beach Sunset', keywords: ['Ocean', 'Dusk', 'Warm Tones', 'Clear'] }
+                    ]
+                },
+                // Presets for Lighting
+                {
+                    id: 'preset-lighting', // Maps to manual 'lighting'
+                    header: 'Lighting',
+                    description: 'Apply specific lighting types and qualities.',
+                    targetCategory: 'lighting',
+                    options: [
+                        {
+                            name: 'Dramatic Backlighting',
+                            keywords: ['Backlighting', 'Dramatic', 'Sharp', 'Rim Lighting']
+                        },
+                        {
+                            name: 'Soft Studio Lighting',
+                            keywords: ['Studio Lighting', 'Soft', 'Diffused', 'Ambient Occlusion']
+                        },
+                        {
+                            name: 'Golden Hour Glow',
+                            keywords: ['Natural Light', 'Warm', 'Soft', 'Glimmering', 'Sunlight']
+                        },
+                        {
+                            name: 'Harsh Top-Down',
+                            keywords: ['Harsh', 'Top-Down Lighting', 'Sharp', 'Moody']
+                        },
+                        {
+                            name: 'Neon & Electric',
+                            keywords: ['Neon Glow', 'Electric Light', 'Vibrant', 'Cool', 'Pulsating']
+                        },
+                        {
+                            name: 'Mysterious Shadow Play',
+                            keywords: ['Dim', 'Moody', 'Mysterious', 'Shadows', 'Contrasting Light']
+                        },
+                        {
+                            name: 'Volumetric & Hazy',
+                            keywords: ['Volumetric Lighting', 'Hazy', 'Diffused', 'Ethereal']
+                        },
+                        // NEW Human Lighting Presets
+                        { name: 'Key & Fill Lighting', keywords: ['Studio Lighting', 'Balanced', 'Soft', 'Clear'] },
+                        { name: 'Chiaroscuro (Dramatic Contrast)', keywords: ['Dramatic', 'Harsh', 'Dark', 'Contrasting Light', 'Shadows'] },
+                        { name: 'Soft Window Light', keywords: ['Natural Light', 'Soft', 'Diffused', 'Warm'] },
+                        { name: 'High-Key Brightness', keywords: ['Bright', 'Soft', 'Diffused', 'High Quality'] }, // For brighter portraits
+                        { name: 'Low-Key Mood', keywords: ['Dim', 'Moody', 'Dark', 'Dramatic'] } // For darker, more intense portraits
+                    ]
+                },
+                // Presets for Art Style & Quality
+                {
+                    id: 'preset-style-art-medium', // Maps to manual 'style-art-medium'
+                    header: 'Art Style',
+                    description: 'Choose popular artistic aesthetics and rendering techniques.',
+                    targetCategory: 'style-art-medium',
+                    options: [
+                        {
+                            name: 'Photorealism Standard',
+                            keywords: ['Photorealistic', 'High Quality', 'Detailed']
+                        },
+                        {
+                            name: 'Digital Painting Style',
+                            keywords: ['Digital Art', 'Concept Art', 'Oil Painting', 'Vivid Colors']
+                        },
+                        {
+                            name: 'Clean Vector Art',
+                            keywords: ['Vector Art', 'Minimalism', 'Sleek', 'Smooth']
+                        },
+                        {
+                            name: 'Gritty Comic Book',
+                            keywords: ['Comic Book Art', 'Grunge', 'Sharp', 'Muted Colors']
+                        },
+                        {
+                            name: 'Classic Oil Painting',
+                            keywords: ['Oil Painting', 'Baroque', 'Rich Colors', 'Textured']
+                        },
+                        {
+                            name: 'Anime Aesthetic',
+                            keywords: ['Anime', 'Stylized', 'Vibrant Colors']
+                        },
+                        {
+                            name: 'Architectural Render',
+                            keywords: ['3D Render', 'Realistic', 'Clean', 'Modern']
+                        },
+                        // NEW Human Portrait/Subject Art Style Presets
+                        { name: 'Realistic Portrait Photography', keywords: ['Photorealistic', 'Studio Quality', 'Sharp Focus', 'Portrait'] },
+                        { name: 'Charcoal Sketch Portrait', keywords: ['Charcoal Drawing', 'Pencil Sketch', 'Monochromatic', 'Rough'] },
+                        { name: 'Abstract Figure Art', keywords: ['Abstract', 'Stylized', 'Digital Art', 'Vibrant Colors'] },
+                        { name: 'Impressionistic Portrait', keywords: ['Impressionism', 'Oil Painting', 'Soft Focus', 'Dreamscape'] },
+                        { name: 'Pop Art Portrait', keywords: ['Pop Art', 'Vibrant Colors', 'Bold', 'Graphic'] },
+                        { name: 'Watercolor Portrait', keywords: ['Watercolor', 'Soft', 'Ethereal'] },
+                        { name: 'Detailed Character Concept', keywords: ['Concept Art', 'Highly Detailed', 'Intricate Details'] }
+                    ]
+                },
+                 {
+                    id: 'preset-quality-detail', // Maps to manual 'quality-detail'
+                    header: 'Quality & Detail',
+                    description: 'Common quality and detail enhancements.',
+                    targetCategory: 'quality-detail',
+                    options: [
+                        {
+                            name: 'Ultra High Detail',
+                            keywords: ['8K', 'Ultra Detailed', 'Photorealistic Render']
+                        },
+                        {
+                            name: 'Cinematic Quality',
+                            keywords: ['Cinematic', 'Epic', 'Immersive', 'Crisp', 'Sharp']
+                        },
+                        {
+                            name: 'Vibrant & Polished',
+                            keywords: ['Vibrant Colors', 'Smooth', 'Polished', 'High Quality']
+                        },
+                        {
+                            name: 'Raw & Gritty',
+                            keywords: ['Gritty', 'Raw', 'Rough', 'Muted Colors']
+                        },
+                        {
+                            name: 'Subtle Details',
+                            keywords: ['Fine Details', 'Delicate', 'Soft Focus']
+                        },
+                        {
+                            name: 'Expressive Colors',
+                            keywords: ['Rich Colors', 'Bold', 'High Contrast', 'Vivid']
+                        },
+                        // NEW Human Subject Quality Presets
+                        { name: 'Skin Texture Realism', keywords: ['Highly Detailed', 'Photorealistic Render', 'Fine Details', 'Crisp'] },
+                        { name: 'Emotional Depth Focus', keywords: ['Dramatic', 'Moody', 'Expressive Colors', 'Soft Focus', 'Immersive'] }
+                    ]
+                },
+                 {
+                    id: 'preset-composition-perspective', // NEW preset category for composition
+                    header: 'Composition & Perspective',
+                    description: 'Common framing and shot types for human subjects and portraits.',
+                    targetCategory: 'composition-perspective',
+                    options: [
+                        { name: 'Classic Portrait Shot', keywords: ['Portrait', 'Close-up', 'Shallow Depth of Field', 'Centered', 'Eye-level'] },
+                        { name: 'Full Body Dynamic Shot', keywords: ['Full Shot', 'Dynamic Composition', 'Low Angle', 'Wide Angle'] },
+                        { name: 'Environmental Portrait', keywords: ['Medium Shot', 'Landscape', 'Deep Depth of Field', 'Rule of Thirds'] },
+                        { name: 'Dramatic Close-up', keywords: ['Close-up', 'Macro Shot', 'Sharp Focus', 'Dramatic'] },
+                        { name: 'Overhead Group Shot', keywords: ['Overhead (Top-down)', 'Group Shot', 'Wide Angle'] },
+                        { name: 'Profile View', keywords: ['Side Lighting', 'Sharp Focus', 'Close-up'] },
+                        { name: 'Candid Street Shot', keywords: ['Wide Shot', 'Motion Blur', 'Off-center', 'Busy'] }
+                    ]
+                }
+            ];
+
+
+            const categoriesSectionsContainer = document.getElementById('categories-sections-container');
+            const presetCategoriesSectionsContainer = document.getElementById('preset-categories-sections-container');
+            const formatCategoriesSectionsContainer = document.getElementById('format-categories-sections-container');
+
+            const subjectInputManual = document.getElementById('subject-input');
+            const subjectInputPresets = document.getElementById('subject-input-presets');
+            const subjectInputFormat = document.getElementById('subject-input-format');
+
+            const finalPromptOutputManual = document.getElementById('final-prompt-manual');
+            const copyPromptBtnManual = document.getElementById('copy-prompt-btn-manual');
+            const resetBtnManual = document.getElementById('reset-btn-manual');
+
+            const finalPromptOutputPresets = document.getElementById('final-prompt-presets');
+            const copyPromptBtnPresets = document.getElementById('copy-prompt-btn-presets');
+            const resetBtnPresets = document.getElementById('reset-btn-presets');
+
+            const finalPromptOutputFormat = document.getElementById('final-prompt-format');
+            const copyPromptBtnFormat = document.getElementById('copy-prompt-btn-format');
+            const resetBtnFormat = document.getElementById('reset-btn-format');
+
+            const messageBox = document.getElementById('message-box');
+
+            const pageToggleGroup = document.getElementById('page-toggle-group');
+            const toggleButtons = document.querySelectorAll('.toggle-button');
+            const sliderIndicator = document.getElementById('slider-indicator');
+
+            const manualPage = document.getElementById('manual-page');
+            const presetsPage = document.getElementById('presets-page');
+            const formatPage = document.getElementById('format-page');
+
+            const selectedPresetKeywordsDisplay = document.getElementById('selected-preset-keywords-display');
+            const currentPresetKeywordsText = document.getElementById('current-preset-keywords');
+
+
+            const selectedOptions = {}; // Global state for selected options by category ID
+            const activePresets = {}; // Stores { 'preset-category-id': 'selected-preset-name' }
+
+            // Initialize selectedOptions with empty Sets for all manual categories
+            categoriesData.forEach(cat => {
+                selectedOptions[cat.id] = new Set();
+            });
+
+            const showMessage = (msg, type = 'info') => {
+                messageBox.textContent = msg;
+                messageBox.classList.remove('hidden');
+                if (type === 'error') {
+                    messageBox.classList.remove('bg-blue-600');
+                    messageBox.classList.add('bg-red-600');
+                } else {
+                    messageBox.classList.remove('bg-red-600');
+                    messageBox.classList.add('bg-blue-600');
+                }
+                setTimeout(() => {
+                    messageBox.classList.add('hidden');
+                }, 3000);
+            };
+
+            const updateSliderIndicator = (activeButton) => {
+                if (activeButton && sliderIndicator) {
+                    sliderIndicator.style.left = `${activeButton.offsetLeft}px`;
+                    sliderIndicator.style.width = `${activeButton.offsetWidth}px`;
+                }
+            };
+
+            const showPage = (pageId) => {
+                document.querySelectorAll('.page-content').forEach(page => {
+                    page.classList.add('hidden');
+                });
+                toggleButtons.forEach(btn => {
+                    btn.classList.remove('active');
+                });
+
+                let activeButton;
+                if (pageId === 'manual') {
+                    manualPage.classList.remove('hidden');
+                    activeButton = document.querySelector('.toggle-button[data-page="manual"]');
+                    // Sync subject input from presets/format to manual
+                    subjectInputManual.value = subjectInputPresets.value || subjectInputFormat.value;
+                } else if (pageId === 'presets') {
+                    presetsPage.classList.remove('hidden');
+                    activeButton = document.querySelector('.toggle-button[data-page="presets"]');
+                    // Sync subject input from manual/format to presets
+                    subjectInputPresets.value = subjectInputManual.value || subjectInputFormat.value;
+                } else if (pageId === 'format') {
+                    formatPage.classList.remove('hidden');
+                    activeButton = document.querySelector('.toggle-button[data-page="format"]');
+                    // Sync subject input from manual/presets to format
+                    subjectInputFormat.value = subjectInputManual.value || subjectInputPresets.value;
+                    renderFormatPageInputs(); // Render inputs when switching to format page
+                }
+
+                if (activeButton) {
+                    activeButton.classList.add('active');
+                    requestAnimationFrame(() => {
+                        updateSliderIndicator(activeButton);
+                    });
+                }
+                updateFinalPrompt(); // Update prompt after page switch
+            };
+
+            // Universal toggle function for manual options
+            const toggleManualOption = (categoryId, optionText, isChecked, optionItem, customCheckboxVisual) => {
+                if (!selectedOptions[categoryId]) {
+                    selectedOptions[categoryId] = new Set();
+                }
+
+                if (isChecked) {
+                    selectedOptions[categoryId].add(optionText);
+                    // If a manual option is selected, deselect any active preset in that category
+                    const presetCategory = presetsCategoriesData.find(pc => pc.targetCategory === categoryId);
+                    if (presetCategory && activePresets[presetCategory.id]) {
+                        // Visually deselect the active preset button in that row
+                        const prevPresetButton = document.querySelector(`#preset-category-${presetCategory.id} .preset-option-card[data-preset-name="${activePresets[presetCategory.id]}"]`);
+                        if (prevPresetButton) {
+                            prevPresetButton.classList.remove('selected');
+                        }
+                        delete activePresets[presetCategory.id]; // Remove active preset tracking
+                        updateSelectedPresetKeywordsDisplay(); // Clear display if preset deselected indirectly
+                    }
+                    optionItem.classList.add('selected');
+                    customCheckboxVisual.querySelector('svg').classList.remove('hidden');
+                } else {
+                    selectedOptions[categoryId].delete(optionText);
+                    optionItem.classList.remove('selected');
+                    customCheckboxVisual.querySelector('svg').classList.add('hidden');
+                }
+                updateFinalPrompt();
+            };
+
+            const renderManualCategoriesWithOptions = () => {
+                categoriesSectionsContainer.innerHTML = '';
+
+                categoriesData.forEach(category => {
+                    const categorySection = document.createElement('div');
+                    categorySection.id = `category-${category.id}`;
+                    categorySection.className = 'glass-element p-6 rounded-lg w-full';
+
+                    const categoryHeader = document.createElement('h2');
+                    categoryHeader.className = 'text-white text-2xl font-bold mb-4 text-center';
+                    categoryHeader.style.fontFamily = 'var(--font-heading)';
+                    categoryHeader.textContent = category.header;
+                    categorySection.appendChild(categoryHeader);
+
+                    if (category.description) {
+                        const categoryDescription = document.createElement('p');
+                        categoryDescription.className = 'text-white text-md opacity-80 text-center mb-6';
+                        categoryDescription.textContent = category.description.split('(')[0].trim(); // Only show main description
+                        categorySection.appendChild(categoryDescription);
+                    }
+
+                    const optionsGrid = document.createElement('div');
+                    optionsGrid.className = 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 custom-scroll overflow-y-auto max-h-96 p-2';
+
+                    if (!selectedOptions[category.id]) {
+                        selectedOptions[category.id] = new Set();
+                    }
+
+                    const addOptionToGrid = (optionText) => {
+                        const optionItem = document.createElement('div');
+                        optionItem.className = 'option-item p-3 rounded-md cursor-pointer text-white';
+
+                        optionItem.innerHTML = `
+                            <label class="w-full h-full flex items-center justify-start gap-2">
+                                <input type="checkbox" id="${category.id}-${optionText.replace(/\s+/g, '-')}" data-option="${optionText}" class="sr-only">
+                                <span class="custom-checkbox-visual">
+                                    <svg class="w-3 h-3 text-white hidden" viewBox="0 0 20 20" fill="currentColor">
+                                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                                    </svg>
+                                </span>
+                                <span>${optionText}</span>
+                            </label>
+                        `;
+
+                        const customCheckbox = optionItem.querySelector('input[type="checkbox"]');
+                        const customCheckboxVisual = optionItem.querySelector('.custom-checkbox-visual');
+
+                        if (selectedOptions[category.id].has(optionText)) {
+                            optionItem.classList.add('selected');
+                            customCheckbox.checked = true;
+                            customCheckboxVisual.querySelector('svg').classList.remove('hidden');
+                        }
+
+                        optionItem.addEventListener('click', () => {
+                            customCheckbox.checked = !customCheckbox.checked;
+                            toggleManualOption(category.id, optionText, customCheckbox.checked, optionItem, customCheckboxVisual);
+                        });
+
+                        optionsGrid.appendChild(optionItem);
+                    };
+
+                    if (Array.isArray(category.options)) {
+                        category.options.forEach(optionText => {
+                            addOptionToGrid(optionText);
+                        });
+                    } else {
+                        for (const subHeader in category.options) {
+                            const subHeaderElement = document.createElement('h4');
+                            subHeaderElement.className = 'text-white text-lg font-semibold col-span-full mt-4 first:mt-0 pt-2 pb-1 border-b border-gray-700/50';
+                            subHeaderElement.textContent = subHeader;
+                            optionsGrid.appendChild(subHeaderElement);
+
+                            category.options[subHeader].forEach(optionText => {
+                                addOptionToGrid(optionText);
+                            });
+                        }
+                    }
+                    categorySection.appendChild(optionsGrid);
+                    categoriesSectionsContainer.appendChild(categorySection);
+                });
+            };
+
+            // Function to update the selected preset keywords display
+            const updateSelectedPresetKeywordsDisplay = (keywords = []) => {
+                if (keywords.length > 0) {
+                    currentPresetKeywordsText.textContent = keywords.join(', ');
+                    selectedPresetKeywordsDisplay.classList.remove('hidden');
+                    // Force reflow for animation
+                    void selectedPresetKeywordsDisplay.offsetWidth;
+                    selectedPresetKeywordsDisplay.style.opacity = '1';
+                    selectedPresetKeywordsDisplay.style.transform = 'translateY(0)';
+                } else {
+                    // Animate out before hiding
+                    selectedPresetKeywordsDisplay.style.opacity = '0';
+                    selectedPresetKeywordsDisplay.style.transform = 'translateY(20px)';
+                    // Hide after transition
+                    selectedPresetKeywordsDisplay.addEventListener('transitionend', function handler() {
+                        selectedPresetKeywordsDisplay.classList.add('hidden');
+                        currentPresetKeywordsText.textContent = ''; // Clear content only after hidden
+                        selectedPresetKeywordsDisplay.removeEventListener('transitionend', handler);
+                    }, { once: true }); // Use { once: true } to ensure the listener is removed after first use
+                }
+            };
+
+            // Function to apply a preset
+            const applyPreset = (presetCategory, presetName, keywords, clickedPresetCard) => {
+                // Deselect all other presets in the same preset category (visual only)
+                document.querySelectorAll(`#preset-category-${presetCategory.id} .preset-option-card`).forEach(card => {
+                    card.classList.remove('selected');
+                });
+
+                // Clear previously selected options in the TARGET MANUAL CATEGORY
+                if (!selectedOptions[presetCategory.targetCategory]) {
+                    selectedOptions[presetCategory.targetCategory] = new Set();
+                }
+
+                // Get all possible options for the target manual category
+                const targetManualCategory = categoriesData.find(cat => cat.id === presetCategory.targetCategory);
+                if (targetManualCategory) {
+                    let allOptionsInTargetCategory = [];
+                    if (Array.isArray(targetManualCategory.options)) {
+                        allOptionsInTargetCategory = targetManualCategory.options;
+                    } else {
+                        for (const subHeader in targetManualCategory.options) {
+                            allOptionsInTargetCategory.push(...targetManualCategory.options[subHeader]);
+                        }
+                    }
+
+                    // Visually uncheck all manual options belonging to this category
+                    allOptionsInTargetCategory.forEach(optionText => {
+                        const manualInput = document.getElementById(`${presetCategory.targetCategory}-${optionText.replace(/\s+/g, '-')}`);
+                        if (manualInput) {
+                            const optionItem = manualInput.closest('.option-item');
+                            const customCheckboxVisual = optionItem.querySelector('.custom-checkbox-visual');
+                            manualInput.checked = false;
+                            optionItem.classList.remove('selected');
+                            customCheckboxVisual.querySelector('svg')?.classList.add('hidden');
+                        }
+                    });
+                }
+                selectedOptions[presetCategory.targetCategory].clear(); // Clear the data model
+
+                // Add new preset's keywords to selectedOptions and visually select them in Manual mode
+                keywords.forEach(keyword => {
+                    selectedOptions[presetCategory.targetCategory].add(keyword);
+                    const manualInput = document.getElementById(`${presetCategory.targetCategory}-${keyword.replace(/\s+/g, '-')}`);
+                    if (manualInput) {
+                        const optionItem = manualInput.closest('.option-item');
+                        const customCheckboxVisual = optionItem.querySelector('.custom-checkbox-visual');
+                        manualInput.checked = true;
+                        optionItem.classList.add('selected');
+                        customCheckboxVisual.querySelector('svg').classList.remove('hidden');
+                    }
+                });
+
+                // Set the current preset as active (visual only for the preset card itself)
+                const selectedPresetCard = document.querySelector(`#preset-category-${presetCategory.id} .preset-option-card[data-preset-name="${presetName}"]`);
+                if (selectedPresetCard) {
+                    selectedPresetCard.classList.add('selected');
+                }
+
+                // Store active preset for this preset category
+                activePresets[presetCategory.id] = presetName;
+
+                // Dynamically insert the selectedPresetKeywordsDisplay after the clicked preset's category section
+                const clickedCategorySection = clickedPresetCard.closest('.glass-element');
+                if (clickedCategorySection) {
+                    clickedCategorySection.after(selectedPresetKeywordsDisplay);
+                }
+
+
+                // Update the dedicated keyword display area
+                updateSelectedPresetKeywordsDisplay(keywords);
+
+                updateFinalPrompt();
+                renderFormatPageInputs(); // Update format page inputs when a preset is applied
+            };
+
+            // Function to render preset categories for PRESETS mode
+            const renderPresetsCategories = () => {
+                presetCategoriesSectionsContainer.innerHTML = '';
+
+                presetsCategoriesData.forEach(presetCategory => {
+                    const categorySection = document.createElement('div');
+                    categorySection.id = `preset-category-${presetCategory.id}`;
+                    categorySection.className = 'glass-element p-6 rounded-lg w-full';
+
+                    const categoryHeader = document.createElement('h2');
+                    categoryHeader.className = 'text-white text-2xl font-bold mb-4 text-center';
+                    categoryHeader.style.fontFamily = 'var(--font-heading)';
+                    categoryHeader.textContent = presetCategory.header;
+                    categorySection.appendChild(categoryHeader);
+
+                    if (presetCategory.description) {
+                        const categoryDescription = document.createElement('p');
+                        categoryDescription.className = 'text-white text-md opacity-80 text-center mb-6';
+                        categoryDescription.textContent = presetCategory.description;
+                        categorySection.appendChild(categoryDescription);
+                    }
+
+                    // Create the horizontal strip container for preset cards
+                    const optionsStrip = document.createElement('div');
+                    optionsStrip.className = 'preset-section-strip custom-scroll';
+
+                    presetCategory.options.forEach(preset => {
+                        const presetCard = document.createElement('button'); // Use button for accessibility and click handling
+                        presetCard.className = 'preset-option-card';
+                        presetCard.setAttribute('type', 'button'); // Explicitly set type to button
+
+                        // Generate a placeholder image URL based on preset name
+                        const imageText = preset.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
+                        // Changed image dimensions to match new rectangular card size
+                        const imageUrl = `https://placehold.co/250x150/3B82F6/ffffff?text=${imageText}`;
+
+                        // Set background image directly via style attribute
+                        presetCard.style.backgroundImage = `url('${imageUrl}')`;
+
+                        presetCard.innerHTML = `
+                            <span class="preset-name-overlay">${preset.name}</span>
+                        `;
+
+                        // Check if this preset is currently active for its category
+                        if (activePresets[presetCategory.id] === preset.name) {
+                            presetCard.classList.add('selected');
+                        }
+
+                        presetCard.dataset.presetName = preset.name; // Store preset name for identification
+
+                        presetCard.addEventListener('click', (event) => {
+                            applyPreset(presetCategory, preset.name, preset.keywords, event.currentTarget); // Pass the clicked card
+                            // Optional: Scroll to center the selected button
+                            presetCard.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+                        });
+                        optionsStrip.appendChild(presetCard);
+                    });
+                    categorySection.appendChild(optionsStrip);
+                    presetCategoriesSectionsContainer.appendChild(categorySection);
+                });
+            };
+
+
+            // NEW: Render function for Format Page inputs
+            const renderFormatPageInputs = () => {
+                formatCategoriesSectionsContainer.innerHTML = ''; // Clear previous content
+
+                // Iterate through categoriesData to create input fields
+                categoriesData.forEach(category => {
+                    const categorySection = document.createElement('div');
+                    categorySection.className = 'glass-element p-6 rounded-lg w-full';
+
+                    const categoryHeader = document.createElement('h2');
+                    categoryHeader.className = 'text-white text-2xl font-bold mb-4 text-center';
+                    categoryHeader.style.fontFamily = 'var(--font-heading)';
+                    categorySection.appendChild(categoryHeader);
+
+                    const categoryDescription = document.createElement('p');
+                    categoryDescription.className = 'text-white text-md opacity-80 text-center mb-4';
+                    categoryDescription.textContent = category.description; // Full description with guidance
+                    categorySection.appendChild(categoryDescription);
+
+                    const textarea = document.createElement('textarea');
+                    textarea.id = `format-input-${category.id}`;
+                    textarea.className = 'w-full p-3 rounded-md bg-transparent text-white border border-gray-600 focus:border-blue-500 focus:outline-none placeholder-gray-400 custom-scroll';
+                    textarea.rows = 3;
+                    textarea.placeholder = `Enter comma-separated keywords for ${category.header.toLowerCase()}`;
+                    textarea.dataset.categoryId = category.id; // Store category ID for easy access
+
+                    // Populate textarea with current selected options for this category
+                    if (selectedOptions[category.id] && selectedOptions[category.id].size > 0) {
+                        textarea.value = Array.from(selectedOptions[category.id]).join(', ');
+                    } else {
+                        textarea.value = '';
+                    }
+
+                    // Add event listener for input changes
+                    textarea.addEventListener('input', (event) => {
+                        parseFormatInputAndUpdatePrompt(event);
+                    });
+
+                    categorySection.appendChild(textarea);
+                    formatCategoriesSectionsContainer.appendChild(categorySection);
+                });
+            };
+
+            // NEW: Function to parse input from Format tab and update selectedOptions
+            const parseFormatInputAndUpdatePrompt = (event) => {
+                const categoryId = event.target.dataset.categoryId;
+                const inputValue = event.target.value.trim();
+
+                if (!selectedOptions[categoryId]) {
+                    selectedOptions[categoryId] = new Set();
+                }
+
+                // Clear previous selections for this category
+                selectedOptions[categoryId].clear();
+
+                if (inputValue) {
+                    inputValue.split(',').forEach(keyword => {
+                        const trimmedKeyword = keyword.trim();
+                        if (trimmedKeyword) {
+                            selectedOptions[categoryId].add(trimmedKeyword);
+                        }
+                    });
+                }
+                // When modifying via format tab, deselect any active preset in this category
+                const presetCategory = presetsCategoriesData.find(pc => pc.targetCategory === categoryId);
+                if (presetCategory && activePresets[presetCategory.id]) {
+                    const prevActivePresetName = activePresets[presetCategory.id];
+                    const prevPresetCard = document.querySelector(`#preset-category-${presetCategory.id} .preset-option-card[data-preset-name="${prevActivePresetName}"]`);
+                    if (prevPresetCard) {
+                        prevPresetCard.classList.remove('selected');
+                    }
+                    delete activePresets[presetCategory.id]; // Remove active preset tracking
+                    updateSelectedPresetKeywordsDisplay(); // Clear display if preset deselected indirectly
+                }
+
+                // Update manual mode checkboxes visually to reflect changes from format tab
+                const targetManualCategory = categoriesData.find(cat => cat.id === categoryId);
+                if (targetManualCategory) {
+                    let allOptionsInTargetCategory = [];
+                    if (Array.isArray(targetManualCategory.options)) {
+                        allOptionsInTargetCategory = targetManualCategory.options;
+                    } else {
+                        for (const subHeader in targetManualCategory.options) {
+                            allOptionsInTargetCategory.push(...targetManualCategory.options[subHeader]);
+                        }
+                    }
+
+                    allOptionsInTargetCategory.forEach(optionText => {
+                        const manualInput = document.getElementById(`${categoryId}-${optionText.replace(/\s+/g, '-')}`);
+                        if (manualInput) {
+                            const optionItem = manualInput.closest('.option-item');
+                            const customCheckboxVisual = optionItem.querySelector('.custom-checkbox-visual');
+                            const isKeywordSelected = selectedOptions[categoryId].has(optionText); // Check if this specific option is now selected
+
+                            if (isKeywordSelected) {
+                                manualInput.checked = true;
+                                optionItem.classList.add('selected');
+                                customCheckboxVisual.querySelector('svg').classList.remove('hidden');
+                            } else {
+                                manualInput.checked = false;
+                                optionItem.classList.remove('selected');
+                                customCheckboxVisual.querySelector('svg').classList.add('hidden');
+                            }
+                        }
+                    });
+                }
+                updateFinalPrompt();
+            };
+
+
+            // Function to build and update the final prompt string
+            const updateFinalPrompt = () => {
+                let promptParts = [];
+                let currentSubject = '';
+
+                // Get subject from the currently active page's input
+                if (!manualPage.classList.contains('hidden')) {
+                    currentSubject = subjectInputManual.value.trim();
+                } else if (!presetsPage.classList.contains('hidden')) {
+                    currentSubject = subjectInputPresets.value.trim();
+                } else if (!formatPage.classList.contains('hidden')) {
+                    currentSubject = subjectInputFormat.value.trim();
+                }
+
+                if (currentSubject) {
+                    promptParts.push(`Generate an image of ${currentSubject}`);
+                } else {
+                    // Clear all outputs if subject is empty
+                    finalPromptOutputManual.value = '';
+                    finalPromptOutputPresets.value = '';
+                    finalPromptOutputFormat.value = '';
+                    return;
+                }
+
+                // Ensure a consistent order for appending categories to the prompt
+                const orderedCategoryIds = categoriesData.map(cat => cat.id);
+
+                orderedCategoryIds.forEach(categoryId => {
+                    if (selectedOptions[categoryId] && selectedOptions[categoryId].size > 0) {
+                        const optionsArray = Array.from(selectedOptions[categoryId]);
+                        if (optionsArray.length > 0) {
+                            switch (categoryId) {
+                                case 'subject-details':
+                                    promptParts.push(`${optionsArray.join(', ')}`);
+                                    break;
+                                case 'action-pose-expression':
+                                    promptParts.push(`${optionsArray.join(', ')}`);
+                                    break;
+                                case 'environment-setting':
+                                    promptParts.push(`in a ${optionsArray.join(', ')} environment`);
+                                    break;
+                                case 'lighting':
+                                    promptParts.push(`with ${optionsArray.join(', ')} lighting`);
+                                    break;
+                                case 'style-art-medium':
+                                    promptParts.push(`in a ${optionsArray.join(', ')} style`);
+                                    break;
+                                case 'composition-perspective':
+                                    promptParts.push(`${optionsArray.join(', ')} composition`);
+                                    break;
+                                case 'quality-detail':
+                                    promptParts.push(`${optionsArray.join(', ')} quality`);
+                                    break;
+                            }
+                        }
+                    }
+                });
+
+                let finalPrompt = promptParts.join(', ');
+                finalPrompt = finalPrompt.replace(/,\s*,/g, ', ').replace(/,\s*$/, '').replace(/^\s*,/, '').trim();
+
+                finalPromptOutputManual.value = finalPrompt;
+                finalPromptOutputPresets.value = finalPrompt;
+                finalPromptOutputFormat.value = finalPrompt; // Update format tab's output
+            };
+
+            const copyPrompt = (outputElementId) => {
+                const outputElement = document.getElementById(outputElementId);
+                if (outputElement.value) {
+                    try {
+                        const tempInput = document.createElement('textarea');
+                        tempInput.value = outputElement.value;
+                        // Make it invisible but accessible for selection
+                        tempInput.style.position = 'absolute';
+                        tempInput.style.left = '-9999px';
+                        tempInput.style.opacity = '0'; // Ensure it's not visible
+                        tempInput.style.width = '1px'; // Give it a minimal size
+                        tempInput.style.height = '1px';
+                        tempInput.style.border = 'none';
+                        tempInput.style.padding = '0';
+                        tempInput.style.margin = '0';
+                        document.body.appendChild(tempInput);
+
+                        tempInput.select();
+                        // For mobile devices, ensure selection is active
+                        tempInput.setSelectionRange(0, tempInput.value.length);
+
+                        const successful = document.execCommand('copy');
+                        document.body.removeChild(tempInput); // Clean up
+
+                        if (successful) {
+                            showMessage('Prompt copied to clipboard!');
+                        } else {
+                            showMessage('Failed to copy prompt: Browser command failed.', 'error');
+                        }
+                    } catch (err) {
+                        console.error('Failed to copy prompt: ', err);
+                        showMessage('Failed to copy prompt: ' + err.message, 'error');
+                    }
+                } else {
+                    showMessage('No prompt to copy!', 'error');
+                }
+            };
+
+            const resetAll = () => {
+                subjectInputManual.value = '';
+                subjectInputPresets.value = '';
+                subjectInputFormat.value = ''; // Clear format tab's subject input
+                finalPromptOutputManual.value = '';
+                finalPromptOutputPresets.value = '';
+                finalPromptOutputFormat.value = ''; // Clear format tab's output
+
+                // Clear all selected options across all manual categories
+                for (const categoryId in selectedOptions) {
+                    selectedOptions[categoryId].clear();
+                }
+                // Clear active presets
+                for (const presetCatId in activePresets) {
+                    delete activePresets[presetCatId];
+                }
+
+                // Uncheck all manual mode checkboxes and remove 'selected' class
+                document.querySelectorAll('#manual-page .option-item').forEach(el => {
+                    const checkbox = el.querySelector('input[type="checkbox"]');
+                    const customCheckboxVisual = el.querySelector('.custom-checkbox-visual');
+                    if (checkbox) {
+                        checkbox.checked = false;
+                    }
+                    if (customCheckboxVisual) {
+                         customCheckboxVisual.querySelector('svg')?.classList.add('hidden');
+                    }
+                    el.classList.remove('selected');
+                });
+
+                // Deselect all preset mode items
+                document.querySelectorAll('#presets-page .preset-option-card').forEach(el => {
+                    el.classList.remove('selected');
+                });
+
+                // Clear all format tab textareas
+                document.querySelectorAll('#format-page textarea[data-category-id]').forEach(textarea => {
+                    textarea.value = '';
+                });
+
+                updateSelectedPresetKeywordsDisplay([]); // Clear the keyword display area with animation
+
+                showMessage('All selections reset.');
+                updateFinalPrompt(); // Update prompt after reset
+            };
+
+            // Attach event listeners for each page's buttons
+            copyPromptBtnManual.addEventListener('click', () => copyPrompt('final-prompt-manual'));
+            resetBtnManual.addEventListener('click', resetAll);
+
+            copyPromptBtnPresets.addEventListener('click', () => copyPrompt('final-prompt-presets'));
+            resetBtnPresets.addEventListener('click', resetAll);
+
+            copyPromptBtnFormat.addEventListener('click', () => copyPrompt('final-prompt-format'));
+            resetBtnFormat.addEventListener('click', resetAll);
+
+            // Event Listeners for Page Toggles
+            toggleButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    showPage(button.dataset.page);
+                });
+            });
+
+            // Initial setup
+            // Modify headers to remove "Presets" from the end (already done, but keeping this for safety)
+            presetsCategoriesData.forEach(category => {
+                if (category.header.endsWith(' Presets')) {
+                    category.header = category.header.slice(0, -8); // Remove " Presets"
+                }
+            });
+
+            renderManualCategoriesWithOptions();
+            renderPresetsCategories();
+            renderFormatPageInputs(); // Initial render for Format page
+
+            subjectInputManual.addEventListener('input', updateFinalPrompt);
+            subjectInputPresets.addEventListener('input', updateFinalPrompt);
+            subjectInputFormat.addEventListener('input', updateFinalPrompt); // Listen for input on format page subject
+
+
+            window.addEventListener('load', () => {
+                showPage('presets'); // Activate presets page by default
+            });
+            window.addEventListener('resize', () => {
+                const activeBtn = document.querySelector('.toggle-button.active');
+                if (activeBtn) {
+                    updateSliderIndicator(activeBtn);
+                }
+            });
+        });
+    </script>
+</body>
+</html>

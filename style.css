@@ -1,0 +1,364 @@
+/* Define CSS Variables for Easy Font Customization */
+:root {
+    --font-heading: 'Futura', 'Trebuchet MS', Arial, sans-serif;
+    --font-body: 'Inter', sans-serif;
+    --font-extra: 'Inter', sans-serif;
+}
+
+html, body {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    overflow-x: hidden; /* Prevent horizontal scroll from elements */
+}
+
+body {
+    /* Retaining the original background image URL */
+    background-image: url('bg.jpg');
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
+    background-color: #2576e7; /* Fallback color */
+    font-family: var(--font-body);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding-top: 5rem; /* Adjust based on header height */
+}
+
+/* Glassmorphism Styles (Consistent) */
+.glass-header {
+    backdrop-filter: blur(10px);
+    background-color: rgba(255, 255, 255, 0.05);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+    box-shadow: 0 4px 18px 0 rgba(31, 38, 135, 0.4);
+}
+
+.glass-button {
+    backdrop-filter: blur(5px);
+    background-color: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 4px 15px 0 rgba(0, 0, 0, 0.18);
+    font-family: var(--font-extra);
+    transition: background-color 0.2s ease-in-out, border-color 0.2s ease-in-out, transform 0.2s ease-in-out;
+}
+
+.glass-button:hover {
+    transform: translateY(-2px);
+}
+
+/* Style for the greyed-out Trending button */
+.glass-button.wip {
+    background-color: rgba(255, 255, 255, 0.03); /* More subtle grey */
+    border-color: rgba(255, 255, 255, 0.05); /* Lighter border */
+    color: rgba(255, 255, 255, 0.4); /* Faded text color */
+    cursor: not-allowed; /* Indicate it's not clickable */
+    box-shadow: none; /* Remove shadow to make it flat */
+    transform: none; /* No lift effect */
+}
+
+.glass-button.wip:hover {
+    background-color: rgba(255, 255, 255, 0.03); /* Keep same on hover */
+    border-color: rgba(255, 255, 255, 0.05); /* Keep same on hover */
+    color: rgba(255, 255, 255, 0.4); /* Keep same on hover */
+    transform: none; /* No transform on hover */
+}
+
+
+/* Standard Glass Element for Category Blocks and Page Containers */
+.glass-element {
+    backdrop-filter: blur(10px);
+    background-color: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.03);
+    box-shadow: 0 4px 18px 0 rgba(31, 38, 135, 0.4);
+    transition: all 0.3s ease-in-out;
+}
+
+/* Style for individual options within categories (Manual tab) */
+.option-item {
+    cursor: pointer;
+    backdrop-filter: blur(5px);
+    background-color: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 2px 8px 0 rgba(0, 0, 0, 0.1);
+    transition: all 0.2s ease-in-out;
+    font-family: var(--font-body);
+    color: white;
+    padding: 0.75rem;
+    border-radius: 0.375rem;
+    text-align: left;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 0.5rem;
+}
+
+/* Hide the native checkbox, but keep it accessible */
+.option-item input[type="checkbox"] {
+    position: absolute;
+    opacity: 0;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+}
+
+/* Custom checkbox visual */
+.custom-checkbox-visual {
+    width: 1.25rem;
+    height: 1.25rem;
+    border: 2px solid rgba(255, 255, 255, 0.7);
+    border-radius: 0.25rem;
+    background-color: rgba(255, 255, 255, 0.1);
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.2s ease-in-out, border-color 0.2s ease-in-out;
+}
+
+/* Checkmark SVG style */
+.custom-checkbox-visual svg {
+    color: #3B82F6;
+    transition: transform 0.12s ease-in-out;
+    transform: scale(0);
+}
+
+.option-item.selected .custom-checkbox-visual {
+    background-color: #3B82F6;
+    border-color: #3B82F6;
+}
+.option-item.selected .custom-checkbox-visual svg {
+    transform: scale(1);
+    color: white;
+}
+
+/* Hover for manual options */
+.option-item:hover {
+    background-color: rgba(255, 255, 255, 0.15);
+}
+
+/* Custom Scrollbar Styles for Options Containers */
+.custom-scroll::-webkit-scrollbar {
+    height: 8px;
+    width: 8px;
+}
+
+.custom-scroll::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 10px;
+}
+
+.custom-scroll::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.custom-scroll::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+/* Redesigned Toggle Button Group Styles (Slider Effect for main menu) */
+.toggle-group {
+    position: relative;
+    background-color: rgba(255, 255, 255, 0.08); /* Background for the track */
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 9999px; /* Fully rounded capsule */
+    padding: 4px; /* Internal padding for the slider */
+    display: flex;
+    /* width adjusted per instance */
+    box-shadow: inset 0 1px 3px rgba(0,0,0,0.3); /* Inner shadow for depth */
+}
+
+.toggle-group .toggle-button {
+    flex-grow: 1;
+    text-align: center;
+    color: white;
+    font-size: 0.875rem;
+    font-weight: 600;
+    padding: 0.5rem 1.25rem; /* py-2 px-5 */
+    border-radius: 9999px;
+    z-index: 10;
+    cursor: pointer;
+    background-color: transparent;
+    border: none;
+    transition: color 0.3s ease-in-out;
+    position: relative;
+}
+
+.toggle-group .toggle-button.active {
+    color: #ffffff;
+}
+
+.toggle-group .toggle-button:hover:not(.active) {
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.slider-indicator {
+    position: absolute;
+    top: 4px;
+    bottom: 4px;
+    background-color: rgba(66, 153, 225, 0.5);
+    border: 1px solid rgba(66, 153, 225, 0.8);
+    border-radius: 9999px; /* Rounded rectangle */
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    transition: left 0.3s ease-in-out, width 0.3s ease-in-out;
+    z-index: 0;
+}
+
+/* Styles for the new horizontal preset sections/strips */
+.preset-section-strip {
+    display: flex;
+    overflow-x: auto; /* Enable horizontal scrolling */
+    -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
+    gap: 1rem; /* Space between preset cards */
+    padding-bottom: 0.5rem; /* For scrollbar visibility */
+    padding-top: 0.5rem;
+    scrollbar-width: thin; /* Firefox */
+    scrollbar-color: rgba(255, 255, 255, 0.2) rgba(255, 255, 255, 0.05); /* Firefox thumb and track */
+}
+
+.preset-option-card {
+    flex-shrink: 0; /* Prevent cards from shrinking */
+    width: 250px; /* Larger rectangular width */
+    height: 150px; /* Larger rectangular height */
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: flex-end;
+    padding: 0.75rem;
+    border-radius: 0.75rem;
+    background-color: rgba(255, 255, 255, 0.08);
+    background-size: cover;
+    background-position: center;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+    color: white;
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+    position: relative;
+    overflow: hidden;
+}
+
+.preset-option-card:hover {
+    background-color: rgba(255, 255, 255, 0.15);
+    transform: translateY(-3px);
+    box-shadow: 0 6px 15px rgba(0,0,0,0.3);
+}
+
+.preset-option-card.selected {
+    background-color: rgba(66, 153, 225, 0.7);
+    border-color: rgba(66, 153, 225, 1);
+    box-shadow: 0 4px 15px rgba(66, 153, 225, 0.6);
+    font-weight: 700;
+}
+
+.preset-name-overlay {
+    position: absolute;
+    bottom: 0.5rem;
+    right: 0.5rem;
+    background-color: rgba(0, 0, 0, 0.6);
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.375rem;
+    font-weight: 600;
+    font-size: 0.85rem;
+    line-height: 1.2;
+    word-wrap: break-word;
+    text-align: right;
+    z-index: 2;
+    max-width: calc(100% - 1rem);
+}
+
+/* Hide the default scrollbar for Webkit browsers for inner strips */
+.preset-section-strip::-webkit-scrollbar {
+    height: 6px;
+}
+
+.preset-section-strip::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 10px;
+}
+
+.preset-section-strip::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 10px;
+}
+
+.preset-section-strip::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+/* Styling for the keywords display area */
+#selected-preset-keywords-display {
+    opacity: 0;
+    transform: translateY(20px); /* Start off-screen below */
+    transition: opacity 0.3s ease-out, transform 0.3s ease-out; /* Animation properties */
+    margin-top: 1.5rem; /* Add some space above it, adjust as needed */
+    margin-bottom: 1.5rem; /* Add space below it, if not followed by another fixed element */
+}
+/* Hidden class to control visibility via JS */
+#selected-preset-keywords-display.hidden {
+    opacity: 0;
+    transform: translateY(20px);
+    pointer-events: none; /* Disable interactions when hidden */
+    height: 0; /* Collapse height when hidden to avoid taking up space */
+    padding-top: 0;
+    padding-bottom: 0;
+    margin-top: 0;
+    margin-bottom: 0;
+    overflow: hidden; /* Hide content during height collapse */
+}
+/* When visible, ensure padding/margin are applied */
+#selected-preset-keywords-display:not(.hidden) {
+     padding-top: 1rem;
+     padding-bottom: 1rem;
+     margin-top: 1.5rem;
+     margin-bottom: 1.5rem;
+     height: auto; /* Let content dictate height */
+}
+/* Styling for loading spinner */
+.loader {
+    border: 4px solid #f3f3f3; /* Light grey */
+    border-top: 4px solid #3B82F6; /* Blue */
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    animation: spin 2s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Style for text inputs with companion buttons */
+.input-with-buttons {
+    display: flex;
+    gap: 0.5rem; /* Space between input and buttons */
+    align-items: center;
+}
+
+.input-with-buttons input {
+    flex-grow: 1; /* Allow input to take available space */
+}
+
+.input-with-buttons .action-button {
+    background-color: rgba(255, 255, 255, 0.15);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: white;
+    padding: 0.5rem 0.75rem;
+    border-radius: 0.375rem;
+    font-size: 0.875rem;
+    cursor: pointer;
+    transition: background-color 0.2s ease-in-out, border-color 0.2s ease-in-out;
+}
+
+.input-with-buttons .action-button:hover {
+    background-color: rgba(255, 255, 255, 0.25);
+}
+.input-with-buttons .action-button.clear-btn:hover {
+    background-color: rgba(255, 0, 0, 0.3); /* Reddish hover for clear */
+    border-color: rgba(255, 0, 0, 0.5);
+}

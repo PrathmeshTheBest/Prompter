@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prompter - Image Prompt Generator</title>
+
+    <!-- Load Inter font from Google Fonts for general text -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Tailwind CSS CDN -->
+    <script src="tailwind3.4.16.js"></script>
+
+    <!-- Link to external CSS file -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Header Section -->
+    <header class="glass-header w-full py-3 px-6 flex justify-between items-center z-20 fixed top-0 left-0 right-0">
+        <div class="flex items-baseline space-x-2">
+            <h1 class="text-white text-3xl font-bold" style="font-family: var(--font-heading);">Prompter</h1>
+            <span class="text-white text-sm opacity-50 font-normal">by Prathmesh</span>
+        </div>
+
+        <!-- 3-Way Toggle for Pages (Slider Effect) - Removed 'Generate' -->
+        <div id="page-toggle-group" class="toggle-group w-72"> <!-- Adjusted width for 3 buttons -->
+            <div id="slider-indicator" class="slider-indicator"></div>
+            <button class="toggle-button" data-page="manual">Manual</button>
+            <button class="toggle-button" data-page="presets">Presets</button>
+            <button class="toggle-button" data-page="format">Format</button>
+        </div>
+
+        <button class="glass-button wip text-white py-1.5 px-5 rounded-md text-base font-semibold" disabled>
+            Trending 🔥 (WIP)
+        </button>
+    </header>
+
+    <!-- Main Content Area - Page Containers -->
+    <main class="flex-grow w-full max-w-4xl p-4 flex flex-col items-center space-y-8">
+
+        <!-- Manual Page -->
+        <div id="manual-page" class="page-content w-full flex flex-col items-center space-y-8 hidden">
+            <!-- Subject Input -->
+            <div class="glass-element p-6 rounded-lg w-full">
+                <label for="subject-input" class="text-white text-xl font-semibold mb-3 block" style="font-family: var(--font-heading);">
+                    What is the main subject of your image?
+                </label>
+                <input type="text" id="subject-input" placeholder="e.g., A majestic lion, a futuristic spaceship, a serene mountain landscape"
+                       class="w-full p-3 rounded-md bg-transparent text-white border border-gray-600 focus:border-blue-500 focus:outline-none placeholder-gray-400">
+            </div>
+
+            <!-- Dynamic Categories Sections -->
+            <div id="categories-sections-container" class="w-full space-y-8">
+                <!-- Categories and their options will be loaded here by JavaScript -->
+            </div>
+
+            <!-- Custom Keywords Input -->
+            <div class="glass-element p-6 rounded-lg w-full">
+                <h2 class="text-white text-2xl font-bold mb-4 text-center" style="font-family: var(--font-heading);">
+                    Your Custom Keywords
+                </h2>
+                <p class="text-white text-md opacity-80 text-center mb-6">
+                    Add your own comma-separated keywords here. They will be saved for future use.
+                </p>
+                <textarea id="custom-keywords-input" placeholder="e.g., ultra-wide angle, cinematic color grading, dystopian future"
+                          class="w-full p-3 rounded-md bg-transparent text-white border border-gray-600 focus:border-blue-500 focus:outline-none placeholder-gray-400 custom-scroll"
+                          rows="2"></textarea>
+                <div class="flex flex-wrap justify-center gap-4 mt-4">
+                    <button id="add-custom-keywords-btn" class="glass-button text-white py-2 px-6 rounded-md text-lg font-semibold">
+                        Add Keywords
+                    </button>
+                    <button id="clear-custom-keywords-btn" class="glass-button text-white py-2 px-6 rounded-md text-lg font-semibold hover:bg-red-700">
+                        Clear All Custom
+                    </button>
+                </div>
+                <div id="custom-keywords-display-area" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 custom-scroll overflow-y-auto max-h-48 p-2 mt-4">
+                    <!-- Custom keywords will be rendered here -->
+                </div>
+            </div>
+
+            <!-- Generated Prompt Output (Manual Page) -->
+            <div class="glass-element p-6 rounded-lg w-full flex flex-col items-center">
+                <h2 class="text-white text-2xl font-bold mb-4" style="font-family: var(--font-heading);">
+                    Your Generated Prompt
+                </h2>
+                <textarea id="final-prompt-manual" readonly rows="8"
+                          class="w-full p-4 rounded-md bg-transparent text-white border border-gray-600 focus:outline-none resize-none mb-4 custom-scroll"></textarea>
+
+                <div class="flex flex-wrap justify-center gap-4 w-full">
+                    <button id="copy-prompt-btn-manual" class="glass-button text-white py-2 px-6 rounded-md text-lg font-semibold
+                                   hover:bg-white hover:text-blue-700 focus:outline-none focus:ring-2 focus:ring-white focus:ring-opacity-75">
+                        Copy Prompt
+                    </button>
+                    <button id="reset-btn-manual" class="glass-button text-white py-2 px-6 rounded-md text-lg font-semibold
+                                   hover:bg-red-700 hover:text-white focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-75">
+                        Reset
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Presets Page (Default Active) -->
+        <div id="presets-page" class="page-content w-full flex flex-col items-center space-y-8">
+            <!-- Subject Input (shared) -->
+            <div class="glass-element p-6 rounded-lg w-full">
+                <label for="subject-input-presets" class="text-white text-xl font-semibold mb-3 block" style="font-family: var(--font-heading);">
+                    What is the main subject of your image?
+                </label>
+                <input type="text" id="subject-input-presets" placeholder="e.g., A majestic lion, a futuristic spaceship, a serene mountain landscape"
+                       class="w-full p-3 rounded-md bg-transparent text-white border border-gray-600 focus:border-blue-500 focus:outline-none placeholder-gray-400">
+            </div>
+
+            <!-- Dynamic Preset Categories Sections -->
+            <div id="preset-categories-sections-container" class="w-full space-y-8">
+                <!-- Preset categories and their options will be loaded here by JavaScript -->
+            </div>
+
+            <!-- Custom User Presets Input Section -->
+            <div class="glass-element p-6 rounded-lg w-full">
+                <h2 class="text-white text-2xl font-bold mb-4 text-center" style="font-family: var(--font-heading);">
+                    Your Custom Presets
+                </h2>
+                <p class="text-white text-md opacity-80 text-center mb-6">
+                    Create and save your own custom preset combinations here.
+                </p>
+                <div class="mb-4">
+                    <label for="custom-preset-name-input" class="text-white text-md mb-2 block">Preset Name:</label>
+                    <input type="text" id="custom-preset-name-input" placeholder="e.g., Dark Fantasy Scene"
+                           class="w-full p-3 rounded-md bg-transparent text-white border border-gray-600 focus:border-blue-500 focus:outline-none placeholder-gray-400">
+                </div>
+                <div class="mb-4">
+                    <label for="custom-preset-keywords-input" class="text-white text-md mb-2 block">Keywords (comma-separated):</label>
+                    <textarea id="custom-preset-keywords-input" placeholder="e.g., ancient runes, shadowy, moonlit forest, mist, 8K"
+                              class="w-full p-3 rounded-md bg-transparent text-white border border-gray-600 focus:border-blue-500 focus:outline-none placeholder-gray-400 custom-scroll"
+                              rows="2"></textarea>
+                </div>
+                <div class="flex flex-wrap justify-center gap-4 mt-4">
+                    <button id="add-user-preset-btn" class="glass-button text-white py-2 px-6 rounded-md text-lg font-semibold">
+                        Add Preset
+                    </button>
+                    <button id="clear-all-user-presets-btn" class="glass-button text-white py-2 px-6 rounded-md text-lg font-semibold hover:bg-red-700">
+                        Clear All Custom Presets
+                    </button>
+                </div>
+                <div id="user-presets-display-area" class="preset-section-strip custom-scroll mt-4">
+                    <!-- Custom user presets will be rendered here -->
+                </div>
+            </div>
+
+            <!-- Selected Preset Keywords Display Area (Now in normal flow, dynamically positioned by JS) -->
+            <div id="selected-preset-keywords-display" class="glass-element p-4 rounded-lg w-full text-white text-sm md:text-base hidden">
+                <h3 class="font-semibold mb-2" style="font-family: var(--font-heading);">Selected Preset Keywords:</h3>
+                <p id="current-preset-keywords" class="opacity-80"></p>
+            </div>
+
+            <!-- Generated Prompt Output (Presets Page) -->
+            <div class="glass-element p-6 rounded-lg w-full flex flex-col items-center">
+                <h2 class="text-white text-2xl font-bold mb-4" style="font-family: var(--font-heading);">
+                    Your Generated Prompt
+                </h2>
+                <textarea id="final-prompt-presets" readonly rows="8"
+                          class="w-full p-4 rounded-md bg-transparent text-white border border-gray-600 focus:outline-none resize-none mb-4 custom-scroll"></textarea>
+
+                <div class="flex flex-wrap justify-center gap-4 w-full">
+                    <button id="copy-prompt-btn-presets" class="glass-button text-white py-2 px-6 rounded-md text-lg font-semibold
+                                   hover:bg-white hover:text-blue-700 focus:outline-none focus:ring-2 focus:ring-white focus:ring-opacity-75">
+                        Copy Prompt
+                    </button>
+                    <button id="reset-btn-presets" class="glass-button text-white py-2 px-6 rounded-md text-lg font-semibold
+                                   hover:bg-red-700 hover:text-white focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-75">
+                        Reset
+                    </button>
+                </div>
+            </div>
+        </div>
+
+
+        <!-- Format Page (Now Interactive) -->
+        <div id="format-page" class="page-content w-full hidden flex flex-col items-center space-y-8">
+            <!-- Subject Input (shared) -->
+            <div class="glass-element p-6 rounded-lg w-full">
+                <label for="subject-input-format" class="text-white text-xl font-semibold mb-3 block" style="font-family: var(--font-heading);">
+                    What is the main subject of your image?
+                </label>
+                <input type="text" id="subject-input-format" placeholder="e.g., A majestic lion, a futuristic spaceship, a serene mountain landscape"
+                       class="w-full p-3 rounded-md bg-transparent text-white border border-gray-600 focus:border-blue-500 focus:outline-none placeholder-gray-400">
+            </div>
+
+            <!-- Dynamic Format Categories Sections -->
+            <div id="format-categories-sections-container" class="w-full space-y-8">
+                <!-- Format categories and their textareas will be loaded here by JavaScript -->
+            </div>
+
+            <!-- Generated Prompt Output (Format Page) -->
+            <div class="glass-element p-6 rounded-lg w-full flex flex-col items-center">
+                <h2 class="text-white text-2xl font-bold mb-4" style="font-family: var(--font-heading);">
+                    Your Generated Prompt
+                </h2>
+                <textarea id="final-prompt-format" readonly rows="8"
+                          class="w-full p-4 rounded-md bg-transparent text-white border border-gray-600 focus:outline-none resize-none mb-4 custom-scroll"></textarea>
+
+                <div class="flex flex-wrap justify-center gap-4 w-full">
+                    <button id="copy-prompt-btn-format" class="glass-button text-white py-2 px-6 rounded-md text-lg font-semibold
+                                   hover:bg-white hover:text-blue-700 focus:outline-none focus:ring-2 focus:ring-white focus:ring-opacity-75">
+                        Copy Prompt
+                    </button>
+                    <button id="reset-btn-format" class="glass-button text-white py-2 px-6 rounded-md text-lg font-semibold
+                                   hover:bg-red-700 hover:text-white focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-75">
+                        Reset
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- The 'Generate' tab content has been removed from here -->
+
+    </main>
+
+    <!-- Message Box for confirmation/errors -->
+    <div id="message-box" class="fixed bottom-4 left-1/2 -translate-x-1/2 p-3 rounded-md text-white bg-blue-600 shadow-lg hidden z-50"></div>
+
+    <!-- Link to external JavaScript file as a module -->
+    <script type="module" src="script.js"></script>
+</body>
+</html>
